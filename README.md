@@ -45,3 +45,8 @@ coal-blending-optimizer/
 ## License
 
 MIT License — free to use, modify, and distribute.
+
+## 🚀 New Features (2026-03-02)
+- Add real-time quality KPI tracking and Pareto optimization
+- Enhanced error handling and edge case coverage
+- Comprehensive unit tests and integration examples
