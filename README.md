@@ -92,3 +92,24 @@ coal-blending-optimizer/
 ```bash
 pytest tests/ -v
 ```
+
+---
+
+## [v1.3.0] Constraint Reporting & Multi-Product Optimization
+
+```python
+# Check quality constraint status
+report = optimizer.constraint_report(df, target_volume_mt=100_000)
+print(report[["parameter", "blended_value", "target", "status"]])
+#          parameter  blended_value  target   status
+#  calorific_value        6010.5    6000       OK
+#      ash_pct               6.2       6      OK
+#     sulfur_pct             0.52      0.5   WARNING
+
+# Optimize for multiple product grades from shared stockpile
+products = [
+    {"name": "6000 NAR", "target_volume_mt": 60_000},
+    {"name": "5800 NAR", "target_volume_mt": 40_000},
+]
+results = optimizer.multi_product_optimize(df, products=products)
+```

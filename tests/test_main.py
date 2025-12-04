@@ -126,3 +126,42 @@ class TestAnalyze:
         assert isinstance(df, pd.DataFrame)
         assert "metric" in df.columns
         assert "value" in df.columns
+
+
+class TestConstraintReport:
+    def test_returns_dataframe(self, optimizer, sample_df):
+        result = optimizer.constraint_report(sample_df)
+        assert isinstance(result, pd.DataFrame)
+
+    def test_has_status_column(self, optimizer, sample_df):
+        result = optimizer.constraint_report(sample_df)
+        assert "status" in result.columns
+
+    def test_valid_status_values(self, optimizer, sample_df):
+        result = optimizer.constraint_report(sample_df)
+        assert set(result["status"]).issubset({"OK", "WARNING", "BREACH"})
+
+    def test_has_parameter_column(self, optimizer, sample_df):
+        result = optimizer.constraint_report(sample_df)
+        assert "parameter" in result.columns
+
+
+class TestMultiProductOptimize:
+    def test_returns_list(self, optimizer, sample_df):
+        products = [
+            {"name": "6000 NAR", "target_volume_mt": 40000},
+            {"name": "5800 NAR", "target_volume_mt": 20000},
+        ]
+        results = optimizer.multi_product_optimize(sample_df, products=products)
+        assert isinstance(results, list)
+        assert len(results) == 2
+
+    def test_product_names_present(self, optimizer, sample_df):
+        products = [{"name": "Premium", "target_volume_mt": 30000}]
+        results = optimizer.multi_product_optimize(sample_df, products=products)
+        assert results[0]["product_name"] == "Premium"
+
+    def test_exceeds_available_raises(self, optimizer, sample_df):
+        products = [{"name": "Huge", "target_volume_mt": 999_999_999}]
+        with pytest.raises(ValueError, match="exceeds available"):
+            optimizer.multi_product_optimize(sample_df, products=products)

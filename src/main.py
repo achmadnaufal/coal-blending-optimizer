@@ -283,3 +283,92 @@ class BlendOptimizer:
             else:
                 rows.append({"metric": k, "value": v})
         return pd.DataFrame(rows)
+
+
+    def constraint_report(self, df: pd.DataFrame, target_volume_mt: float = 100_000) -> pd.DataFrame:
+        """
+        Generate a constraint report showing which quality parameters are binding.
+
+        For each quality parameter, calculates the weighted-average value,
+        distance from target, and margin to min/max limits.
+
+        Args:
+            df: Coal source DataFrame.
+            target_volume_mt: Total blend volume in metric tonnes.
+
+        Returns:
+            DataFrame with parameter, blended_value, target, min, max,
+            distance_from_target, headroom_to_max, status (OK/WARNING/BREACH).
+        """
+        result = self.optimize_blend(df, target_volume_mt=target_volume_mt)
+        rows = []
+        for param, check in result.get("quality_check", {}).items():
+            val = check["value"]
+            target = check.get("target")
+            mn = check.get("min")
+            mx = check.get("max")
+            distance = round(val - target, 3) if target is not None else None
+            headroom = round(mx - val, 3) if mx is not None else None
+            margin_to_min = round(val - mn, 3) if mn is not None else None
+            if not check["pass"]:
+                status = "BREACH"
+            elif headroom is not None and headroom < (mx - mn) * 0.1 if (mx and mn) else False:
+                status = "WARNING"
+            else:
+                status = "OK"
+            rows.append({
+                "parameter": param,
+                "blended_value": val,
+                "target": target,
+                "min_spec": mn,
+                "max_spec": mx,
+                "distance_from_target": distance,
+                "headroom_to_max": headroom,
+                "margin_to_min": margin_to_min,
+                "status": status,
+            })
+        return pd.DataFrame(rows)
+
+    def multi_product_optimize(
+        self, df: pd.DataFrame, products: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        """
+        Optimize blends for multiple product grades simultaneously.
+
+        Args:
+            df: Coal source DataFrame with volume_available_mt.
+            products: List of dicts, each with keys:
+                - name: Product grade name (e.g. "6000 NAR")
+                - target_volume_mt: Volume required
+                - quality_specs: (optional) Override specs for this product
+
+        Returns:
+            List of blend result dicts, one per product, with 'product_name' added.
+
+        Raises:
+            ValueError: If total required volume exceeds available supply.
+        """
+        total_required = sum(p.get("target_volume_mt", 0) for p in products)
+        total_available = df["volume_available_mt"].sum() if "volume_available_mt" in df.columns else float("inf")
+        if total_required > total_available:
+            raise ValueError(
+                f"Total required {total_required:,.0f} MT exceeds available {total_available:,.0f} MT"
+            )
+        results = []
+        remaining_df = df.copy()
+        if "volume_available_mt" in remaining_df.columns:
+            remaining_df["volume_available_mt"] = remaining_df["volume_available_mt"].astype(float)
+        for product in products:
+            name = product.get("name", "Product")
+            vol = product.get("target_volume_mt", 50_000)
+            specs = product.get("quality_specs")
+            res = self.optimize_blend(remaining_df, target_volume_mt=vol, quality_specs=specs)
+            res["product_name"] = name
+            results.append(res)
+            # Reduce available volume for subsequent products
+            if "volume_available_mt" in remaining_df.columns:
+                for src_id, used_vol in res.get("blend_volume_mt", {}).items():
+                    mask = remaining_df["source_id"].astype(str) == str(src_id)
+                    remaining_df.loc[mask, "volume_available_mt"] -= float(used_vol)
+                remaining_df["volume_available_mt"] = remaining_df["volume_available_mt"].clip(0)
+        return results
