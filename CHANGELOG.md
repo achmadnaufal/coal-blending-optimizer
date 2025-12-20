@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.2.0] - 2026-03-06
+## [CURRENT] - 2026-03-07
 
 ### Added
 - Add constraint handling for volatile coal quality parameters
