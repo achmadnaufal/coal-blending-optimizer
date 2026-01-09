@@ -372,3 +372,52 @@ class BlendOptimizer:
                     remaining_df.loc[mask, "volume_available_mt"] -= float(used_vol)
                 remaining_df["volume_available_mt"] = remaining_df["volume_available_mt"].clip(0)
         return results
+
+    def calculate_blend_environmental_impact(self, blend_volumes: dict, source_data: list) -> dict:
+        """
+        Calculate environmental impact metrics of blended coal product.
+        
+        Computes blended SO2/NOx emissions, ash content, and carbon intensity
+        based on constituent coal sources.
+        
+        Args:
+            blend_volumes: Dict of {source_id: volume_mt}
+            source_data: List of dicts with source emissions and ash data
+            
+        Returns:
+            Dict with blended environmental metrics
+        """
+        if not blend_volumes:
+            return {}
+        
+        # Create lookup for source data
+        source_dict = {str(s.get("source_id", "")): s for s in source_data}
+        
+        total_volume = sum(blend_volumes.values())
+        blended_metrics = {
+            "so2_emissions_kg_per_mt": 0,
+            "nox_emissions_kg_per_mt": 0,
+            "ash_content_percent": 0,
+            "sulfur_content_percent": 0,
+            "carbon_intensity_tco2_per_mwh": 0,
+        }
+        
+        if total_volume == 0:
+            return blended_metrics
+        
+        # Calculate weighted average emissions
+        for source_id, volume in blend_volumes.items():
+            source = source_dict.get(str(source_id), {})
+            weight = volume / total_volume
+            
+            blended_metrics["so2_emissions_kg_per_mt"] += weight * source.get("so2_emissions_kg_per_mt", 0)
+            blended_metrics["nox_emissions_kg_per_mt"] += weight * source.get("nox_emissions_kg_per_mt", 0)
+            blended_metrics["ash_content_percent"] += weight * source.get("ash_content_percent", 0)
+            blended_metrics["sulfur_content_percent"] += weight * source.get("sulfur_content_percent", 0)
+            blended_metrics["carbon_intensity_tco2_per_mwh"] += weight * source.get("carbon_intensity_tco2_per_mwh", 0)
+        
+        # Round to appropriate precision
+        blended_metrics = {k: round(v, 2) for k, v in blended_metrics.items()}
+        blended_metrics["total_blend_volume_mt"] = int(total_volume)
+        
+        return blended_metrics
