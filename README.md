@@ -357,4 +357,25 @@ See [CHANGELOG.md](CHANGELOG.md) for version history and improvements.
 
 ## Usage Examples
 
+### Optimize Blend for Target GCV
+
+```python
+from src.main import CoalBlendingOptimizer
+
+optimizer = CoalBlendingOptimizer()
+
+sources = [
+    {"source_id": "PIT-A", "gcv_mj_kg": 27.0, "volume_available_mt": 5000, "cost_usd_per_t": 110},
+    {"source_id": "PIT-B", "gcv_mj_kg": 21.0, "volume_available_mt": 8000, "cost_usd_per_t": 75},
+    {"source_id": "PIT-C", "gcv_mj_kg": 24.5, "volume_available_mt": 3000, "cost_usd_per_t": 92},
+]
+
+result = optimizer.optimize_blend_for_target_gcv(sources, target_gcv_mj_kg=25.0)
+print(f"Meets target: {result['meets_target']}")
+print(f"Achieved GCV: {result['blended_gcv_mj_kg']:.2f} MJ/kg")
+print(f"Blend cost:   ${result['blending_cost_usd_per_t']:.2f}/t")
+for src, ratio in result["blend_ratios"].items():
+    print(f"  {src}: {ratio*100:.1f}%")
+```
+
 Refer to the `tests/` directory for comprehensive example implementations.
