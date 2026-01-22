@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.4.0] - 2026-03-21
+
+### Added
+- **Blend Compliance Checker** (`src/blend_compliance_checker.py`) — ASTM/ISO contract specification validation
+  - Checks blend quality against min/max/target specs with configurable warn bands
+  - ComplianceStatus enum: PASS, WARN (near limit), FAIL
+  - `check_batch()` for multi-lot compliance verification before shipment
+  - `summary_table()` for concise compliance dashboard output
+  - Auto-generated corrective action recommendations for failed parameters
+  - `BlendComplianceReport` and `ParameterCheck` dataclasses
+- **Sample data** — `data/blend_compliance_specs.csv` with 4 contract templates (PLN Indonesia, JERA Japan, POSCO Korea, ENEL Italy)
+- **Unit tests** — 18 new tests in `tests/test_blend_compliance_checker.py`
+
 ## [1.3.0] - 2026-03-15
 
 ### Added
