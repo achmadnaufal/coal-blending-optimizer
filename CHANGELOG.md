@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.5.0] - 2026-03-22
+
+### Added
+- **Washability Analyzer** (`src/washability_analyzer.py`) — DMS yield-vs-ash curve modeling from float-sink data
+  - `FloatSinkFraction` dataclass for structured float-sink test input (weight%, ash%, optional sulfur/GCV per fraction)
+  - `WashabilityResult` dataclass with yield, ash, sulfur, GCV, NGM index, and separability index
+  - `analyze_at_density()` — theoretical product characteristics at any cut SG using linear boundary-fraction splitting
+  - `find_density_for_target_ash()` — back-calculates optimal cut density for a given clean coal ash specification
+  - `generate_curve()` — sweeps SG range to produce full yield-ash washability curve for visualization
+  - `raw_coal_characteristics()` — weighted mean properties of the raw (as-received) feed coal
+  - Near-gravity material (NGC) index calculation per ±0.1 SG band
+  - Separability index (refuse_ash / clean_ash) as a process difficulty indicator
+  - Weight-sum validation on construction (configurable tolerance)
+- **Unit tests** — 23 new tests in `tests/test_washability_analyzer.py`
+
+### References
+- ASTM D4371 Standard Test Method for Float-and-Sink Analysis of Coal
+- Osborne (1988) Coal Preparation Technology, Graham & Trotman
+- Sanders & Schapman (1999) Washability Analysis in Coal Preparation
+
 ## [1.4.0] - 2026-03-21
 
 ### Added
