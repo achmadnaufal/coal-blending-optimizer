@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.6.0] - 2026-03-26
+
+### Added
+- **TransportCostOptimizer** (`src/transport_cost_optimizer.py`) — mine-to-port logistics cost modelling
+  - Multi-modal leg modelling: haul truck, conveyor, rail, barge, vessel
+  - Full cost breakdown: variable (rate × distance) + fixed handling per leg
+  - GHG emission intensity per leg (IPCC 2006 / IMO 4th GHG Study factors)
+  - Bottleneck identification: minimum effective capacity across supply chain
+  - Capacity utilisation and feasibility check per route
+  - `compare_routes()`: rank multiple routes by landed cost (USD/tonne)
+  - `sensitivity_analysis()`: landed cost vs volume range (±% variation, N steps)
+  - Incoterms 2020 support: FOB / CFR / CIF / DAP cost boundaries
+  - Marine insurance cost modelled as % of coal cargo value
+  - `LogisticsRoute` aggregates full chain: mine FOB + legs + port charges + insurance
+- Unit tests: 13 new tests in `tests/test_transport_cost_optimizer.py`
+
 ## [1.5.0] - 2026-03-22
 
 ### Added
