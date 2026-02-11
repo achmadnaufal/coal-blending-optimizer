@@ -82,3 +82,27 @@
 - Added comprehensive docstrings to key functions
 - Added error handling for edge cases
 - Improved README with setup and usage examples
+
+## [1.9.0] - 2026-03-27
+
+### Added
+- **Port Inventory Planner** (`src/port_inventory_planner.py`) — Multi-product coal export terminal inventory management
+  - `CoalProduct` dataclass: product code, GCV, ash, moisture, price, storage category (general/low_rank/premium)
+  - `InventoryTransaction` dataclass: receipt/loading/adjustment types, day-indexed, `is_inflow` property
+  - `VesselOrder` dataclass: vessel ID, product, quantity, loading day, tolerance±%; computed `loading_hours`, `min_quantity`, `max_quantity` properties
+  - `StockpileConstraints` dataclass: total capacity, pad capacity by product, reclaim/stacking rates, max simultaneous vessels
+  - `PortInventoryPlanner` class (7–90 day horizon, configurable safety stock days)
+  - `register_product()`, `set_opening_stock()`, `set_constraints()`, `add_transaction()`, `add_vessel_order()` setup methods
+  - `inventory_at_day()`: point-in-time balance computation (receipts + adjustments - vessel loadings), floored at 0
+  - `projection()`: day-by-day inventory flow table with opening/closing balance, receipts, loadings, safety stock alert
+  - `check_vessel_feasibility()`: stock availability vs vessel requirement with tolerance, loading rate vs reclaimer capacity checks
+  - `capacity_utilisation()`: total stock vs max capacity with congestion alert at 85% threshold
+  - `days_of_stock()`: remaining days of stock based on projected demand rate
+  - `export_plan_summary()`: fleet-level summary with per-vessel feasibility, total tonnage, all_feasible flag
+  - Safety stock target: average daily demand × safety_stock_days
+- **Unit tests** — 44 new tests in `tests/test_port_inventory_planner.py` (all passing)
+
+### References
+- Stopford (2009) Maritime Economics. 3rd ed. Routledge
+- DNV GL (2018) Terminal Operations Guidelines — Coal Port Capacity Planning
+- Silver et al. (2017) Inventory and Production Management in Supply Chains. 4th ed.
