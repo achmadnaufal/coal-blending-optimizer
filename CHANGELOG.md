@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.7.0] - 2026-03-30
+
+### Added
+- **ContractComplianceChecker** (`src/contract_compliance_checker.py`)
+  - `ContractComplianceChecker` — validates blended coal quality against contractual Guaranteed/Typical/Rejection specifications with price adjustment computation
+  - `ContractParameter` — flexible spec definition with direction (higher/lower better), penalty/bonus rates per unit deviation, bonus caps
+  - `ConsignmentComplianceReport` — structured report with per-parameter breakdown, rejection flags, risk tier (green/amber/red), and total financial impact
+  - Default GAR 5500 kcal/kg Indonesian export contract template (CV, moisture, ash, sulphur, volatile matter)
+  - `check_batch()` + `batch_summary()` for fleet/month compliance reporting
+  - Bonus cap enforcement to prevent over-claiming
+- **Test Suite** (`tests/test_contract_compliance_checker.py`) — 32 unit tests covering instantiation, acceptance, rejection, price adjustments, bonus capping, risk tiers, and batch operations
+
 ## [1.6.0] - 2026-03-26
 
 ### Added
