@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.8.0] - 2026-03-30
+
+### Added
+- **Dust Suppression Cost Calculator** (`src/dust_suppression_cost_calculator.py`) — annual cost estimation for coal dust suppression on stockpiles and haul roads
+  - 5 suppression methods: water_spray, polymer_binder, bitumen_emulsion, calcium_chloride, lignin_sulphonate
+  - Climate-adjusted application frequency: temperature (+5%/5°C above 25°C), rainfall (–10%/500mm above 1000mm), dry coal (<8% moisture: +20%)
+  - Cost components: chemical, labour, equipment (Indonesian mine operator rates)
+  - `DustSuppressionEstimate.to_dict()`: structured output for reporting
+  - `compare_methods()`: all methods ranked by cost-effectiveness ratio (effectiveness/cost)
+  - `annual_water_consumption_m3()`: water balance planning helper
+  - `cost_per_tonne_suppressed_usd`: efficiency metric when dust generation rate is provided
+  - Full input validation: area, temperature, rainfall, moisture ranges
+- **Unit tests** — 30 new tests in `tests/test_dust_suppression_cost_calculator.py`
+
+### References
+- ACARP (2018) Dust Suppression on Coal Haul Roads: Technical Review. Report C26063.
+- IFC (2007) EHS Guidelines for Coal Mining. World Bank Group.
+- SNI 5018:2011 Indonesian Coal Mine Environmental Standard — Dust Management.
+
 ## [1.7.0] - 2026-03-30
 
 ### Added
