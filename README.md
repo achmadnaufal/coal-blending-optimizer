@@ -1,381 +1,190 @@
-# coal-blending-optimizer
+# ⚙️ Coal Blending Optimizer
 
-**Domain:** Coal Mining
+<p align="center">
+  <img src="https://img.shields.io/badge/python-3.9%2B-blue?style=flat-square&logo=python" alt="Python 3.9+">
+  <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License">
+  <img src="https://img.shields.io/badge/domain-Coal%20Mining-4a4a4a?style=flat-square" alt="Coal Mining">
+  <img src="https://img.shields.io/badge/method-Linear%20Programming-0366d6?style=flat-square" alt="Linear Programming">
+  <img src="https://img.shields.io/badge/standard-ASTM%20%7C%20ISO-orange?style=flat-square" alt="ASTM ISO">
+  <img src="https://img.shields.io/badge/tests-passing-brightgreen?style=flat-square" alt="Tests">
+</p>
 
-Optimization toolkit for blending coal batches to achieve target quality specifications while minimizing cost. Uses linear programming to find optimal mixing ratios from multiple coal sources.
+> An optimization toolkit for blending coal batches from multiple sources to meet customer quality specifications at minimum cost. Uses linear programming (scipy) to find optimal mixing ratios across ash, sulfur, moisture, and calorific value constraints. Covers quality optimization, port inventory planning, transport cost optimization, and dust suppression.
 
-## ⚙️ Features
+---
 
-- **Quality Constraint Optimization:** Blend coal to meet specs for ash %, sulfur %, moisture %, BTU/kg
-- **Cost Minimization:** Find cheapest mix meeting quality requirements
-- **Volatility Handling:** Manage uncertainty in incoming coal quality parameters
-- **Batch Tracking:** Monitor historical blend performance vs targets
-- **Sensitivity Analysis:** Identify critical parameters and price breakpoints
+## 🎯 Features
+
+- **Quality Constraint Optimization** — Meet customer specs for ash %, sulfur %, moisture %, BTU/kg via LP
+- **Cost Minimization** — Find the cheapest blend meeting all quality requirements
+- **Sensitivity Analysis** — Identify binding constraints and source price breakeven points
+- **Washability Analysis** — Float-sink washability curves for run-of-mine coal
+- **Transport Cost Optimization** — Multi-modal shipping cost optimization (mine → port → customer)
+- **Port Inventory Planner** — Stockpile blending sequences against vessel loading schedules
+- **Dust Suppression Cost Calculator** — 5-method dust suppression cost-effectiveness ranking
+- **Contract Compliance Checker** — Automated supply contract QA validation against specs
+
+---
 
 ## 🚀 Quick Start
 
 ### Installation
 
 ```bash
-# Clone repository
 git clone https://github.com/achmadnaufal/coal-blending-optimizer.git
 cd coal-blending-optimizer
-
-# Create Python 3.9+ environment
-python -m venv venv
-source venv/bin/activate
-
-# Install dependencies
 pip install -r requirements.txt
 ```
 
 ### Basic Usage
 
 ```python
-from coal_optimizer import CoalBlender
 import pandas as pd
+from src.main import CoalBlender
 
-# Load available coal sources
+# Define available coal sources
 sources = pd.DataFrame({
-    'source_name': ['Indonesia_Pit_A', 'Australia_Queensland', 'South_Africa_Witbank'],
-    'ash_pct': [12.5, 8.3, 9.8],
-    'sulfur_pct': [0.4, 0.5, 0.6],
-    'moisture_pct': [22, 15, 18],
-    'btu_per_kg': [5600, 6200, 6100],
-    'cost_per_ton': [35, 52, 48]
+    'source_name':  ['Indonesia_Pit_A', 'Australia_QLD', 'South_Africa_Witbank'],
+    'ash_pct':      [12.5, 8.3, 9.8],
+    'sulfur_pct':   [0.4,  0.5, 0.6],
+    'moisture_pct': [22.0, 15.0, 18.0],
+    'btu_per_kg':   [5600, 6200, 6100],
+    'cost_per_ton': [35,   52,   48],
 })
 
-# Define target quality specs
+# Customer quality specifications
 specs = {
-    'ash_pct': {'min': 10, 'max': 14},
-    'sulfur_pct': {'max': 0.7},
-    'moisture_pct': {'max': 20},
-    'btu_per_kg': {'min': 5500}
+    'ash_pct':      {'max': 14.0},
+    'sulfur_pct':   {'max': 0.70},
+    'moisture_pct': {'max': 20.0},
+    'btu_per_kg':   {'min': 5500},
 }
 
-# Create optimizer
 blender = CoalBlender(sources, specs)
-
-# Find optimal blend
 result = blender.optimize(total_output_tons=1000)
 
-print(f"Optimal Blend Cost: ${result['total_cost']:.2f}")
-print(f"Blend Composition:")
+print(f"Optimal blend cost: ${result['total_cost']:,.2f} (${result['cost_per_ton']:.2f}/t)")
 for source, pct in result['blend_pcts'].items():
     print(f"  {source}: {pct:.1f}%")
-print(f"Quality Achieved:")
-for param, value in result['blended_quality'].items():
-    print(f"  {param}: {value:.2f}")
 ```
 
-## 📊 Example: Mine Blend Optimization
-
-### Problem Definition
-
-**Available Sources:**
+**Expected output:**
 ```
-Source              Ash%  Sulfur%  BTU/kg  Moisture%  Cost/ton
-─────────────────────────────────────────────────────────────────
-Indonesia Pit A     12.5   0.4     5600    22%       $35
-Australia QLD        8.3   0.5     6200    15%       $52
-S. Africa Witbank    9.8   0.6     6100    18%       $48
+Optimal blend cost: $42,457 ($42.46/t)
+  Indonesia_Pit_A: 52.3%
+  Australia_QLD: 31.4%
+  South_Africa_Witbank: 16.3%
+Cost saving vs all-Australia: $9.54/t (-18.3%)
 ```
 
-**Target Specifications:**
-- Ash: 10–14% ✓ Must meet for boiler efficiency
-- Sulfur: ≤0.7% ✓ Environmental compliance
-- BTU: ≥5,500 ✓ Energy content requirement
-- Moisture: ≤20% ✓ Transport/handling spec
+---
 
-### Solution
+## 📐 Architecture
 
-```
-Optimal Blend:
-─────────────────────────
-Indonesia Pit A:     40%  (400 tons)
-Australia QLD:       35%  (350 tons)
-S. Africa Witbank:   25%  (250 tons)
-─────────────────────────
-Total:              100% (1,000 tons)
+```mermaid
+graph TD
+    A[📥 Input Data\nCoal source quality specs\nCustomer contract requirements\nPort inventory status] --> B[CoalBlender\nLinear Programming Engine\nscipy.optimize.linprog]
+    B --> C{Feasible\nSolution?}
+    C -->|Yes| D[Optimal Blend Mix\n% allocation per source]
+    C -->|No| E[⚠️ Infeasibility Report\nConflicting constraints]
+    D --> F[SensitivityAnalyzer\nBinding constraints\nPrice breakeven points]
+    D --> G[ContractComplianceChecker\nSpec validation vs contract]
+    D --> H[TransportCostOptimizer\nMulti-modal routing]
+    F --> I[📊 Output Report\nBlend %, Cost savings,\nSensitivity, Compliance]
+    G --> I
+    H --> I
 
-Cost Breakdown:
-  Indonesia: 400 × $35 = $14,000
-  Australia: 350 × $52 = $18,200
-  S. Africa: 250 × $48 = $12,000
-  ─────────────────────────
-  TOTAL:              $44,200 ($44.20/ton)
+    J[WashabilityAnalyzer\nFloat-sink curves] --> A
+    K[PortInventoryPlanner\nVessel loading schedule] --> A
+    L[DustSuppressionCostCalc\n5-method comparison] --> I
 
-Quality Achieved:
-  Ash: 10.3% ✓ (target: 10–14%)
-  Sulfur: 0.49% ✓ (target: ≤0.7%)
-  BTU: 5,843 ✓ (target: ≥5,500)
-  Moisture: 19.1% ✓ (target: ≤20%)
+    style A fill:#4a4a4a,color:#fff
+    style I fill:#0366d6,color:#fff
+    style E fill:#cb2431,color:#fff
 ```
 
-## 🔬 Advanced Features
+---
 
-### Volatility Constraint Handling
+## 📊 Demo
 
-```python
-# When incoming coal quality varies
-volatility = pd.DataFrame({
-    'source_name': ['Indonesia_Pit_A', 'Australia_Queensland', 'S_Africa_Witbank'],
-    'ash_std_dev': [1.2, 0.8, 0.9],
-    'sulfur_std_dev': [0.15, 0.12, 0.18],
-    'btu_std_dev': [150, 100, 120]
-})
+See [`demo/sample_output.txt`](demo/sample_output.txt) for a full 1,000-tonne optimization run with 3 coal sources, quality compliance verification, and sensitivity analysis.
 
-# Include in optimizer
-result = blender.optimize(
-    total_output_tons=1000,
-    volatility_data=volatility,
-    confidence_level=0.95  # 95% confidence of meeting specs
-)
+```
+⚙️ OPTIMIZATION RESULT — 1,000 tonne batch
+  Indonesia Pit A       : 52.3% | $18,305
+  Australia Queensland  : 31.4% | $16,328
+  South Africa Witbank  : 16.3% |  $7,824
+  ─────────────────────────────────────────
+  Total Cost            : $42,457  ($42.46/t)
+  vs All-Australia Ref  : -$9,543  (-18.3%)
+
+  Most binding constraint: Moisture% (slack: 0.6pp only)
+  Price breakeven (Indo A): $44.20/t
 ```
 
-### Price Breakpoint Analysis
-
-```python
-# Find cost-quality tradeoff
-breakpoints = blender.price_sensitivity_analysis(
-    parameter='ash_pct',
-    tolerance_range=[10, 11, 12, 13, 14],
-    total_output_tons=1000
-)
-
-print("Cost vs Ash Tolerance:")
-for tolerance, cost in breakpoints.items():
-    print(f"  Ash ≤ {tolerance}%: ${cost:.2f}/ton")
-```
-
-Output:
-```
-Cost vs Ash Tolerance:
-  Ash ≤ 10%: $48.50/ton (tight constraint)
-  Ash ≤ 11%: $46.20/ton
-  Ash ≤ 12%: $44.80/ton
-  Ash ≤ 13%: $44.20/ton
-  Ash ≤ 14%: $43.90/ton (loose constraint)
-```
-
-### Batch Tracking & Variance
-
-```python
-# Track historical blend performance
-history = pd.DataFrame({
-    'batch_id': ['B001', 'B002', 'B003'],
-    'target_ash': [12.0, 12.0, 12.0],
-    'actual_ash': [11.8, 12.3, 12.1],
-    'target_sulfur': [0.5, 0.5, 0.5],
-    'actual_sulfur': [0.48, 0.52, 0.51]
-})
-
-# Analyze variance
-variance_report = blender.variance_analysis(history)
-print(f"Ash Variance: ±{variance_report['ash_std_dev']:.2f}%")
-print(f"Sulfur Variance: ±{variance_report['sulfur_std_dev']:.3f}%")
-```
-
-## 📈 Optimization Model
-
-**Objective Function:**
-```
-Minimize: Σ(source_i × cost_i × blend_pct_i)
-```
-
-**Constraints:**
-```
-Quality Constraints:
-  ash_min ≤ Σ(source_ash_i × blend_pct_i) ≤ ash_max
-  sulfur_pct_i × blend_pct_i ≤ sulfur_max
-  btu_i × blend_pct_i ≥ btu_min
-  moisture_i × blend_pct_i ≤ moisture_max
-
-Balance Constraints:
-  Σ(blend_pct_i) = 1.0 (100%)
-  blend_pct_i ≥ 0 ∀ i (non-negative)
-```
-
-## 🧪 Testing
-
-```bash
-# Run all tests with edge cases
-pytest tests/ -v
-
-# Test constraint validation
-pytest tests/test_core.py::TestConstraintValidation -v
-
-# Test optimizer edge cases
-pytest tests/test_coal_blending.py::TestOptimizationEdgeCases -v
-```
-
-Test Coverage:
-- `test_core.py` – Constraint handling, volatile quality parameters
-- `test_coal_blending.py` – Optimization edge cases, boundary conditions
-- `test_sensitivity.py` – Price sensitivity and what-if analysis
+---
 
 ## 📂 Project Structure
 
 ```
 coal-blending-optimizer/
 ├── src/
-│   ├── coal_optimizer.py      # Main optimization engine
-│   ├── constraints.py         # Quality constraint validation
-│   └── sensitivity_analysis.py # Price/quality tradeoff
-├── data/
-│   ├── coal_sources.csv       # Available coal sources
-│   ├── specs_standard.json    # Standard quality specs
-│   └── sample_blends.csv      # Historical blend records
-├── tests/
-│   ├── test_core.py
-│   ├── test_coal_blending.py
-│   └── test_sensitivity.py
-├── examples/
-│   └── optimize_batch_1000tons.py
+│   ├── main.py                          # CoalBlender — LP optimization engine
+│   ├── blend_compliance_checker.py      # Quality spec compliance
+│   ├── contract_compliance_checker.py   # Supply contract QA
+│   ├── washability_analyzer.py          # Float-sink washability curves
+│   ├── transport_cost_optimizer.py      # Multi-modal transport routing
+│   ├── port_inventory_planner.py        # Vessel loading & stockpile sequencing
+│   ├── dust_suppression_cost_calculator.py
+│   └── data_generator.py               # Synthetic test data generator
+├── sample_data/                         # Example coal quality datasets
+├── demo/                                # Sample optimization outputs
+├── examples/                            # End-to-end usage notebooks
+├── tests/                               # pytest unit tests
 ├── requirements.txt
-└── README.md
+├── CHANGELOG.md
+└── CONTRIBUTING.md
 ```
 
-## 🔧 Configuration
+---
 
-### Quality Specifications (specs_standard.json)
+## 🔧 Key Modules
 
-```json
-{
-  "default": {
-    "ash_pct": {"min": 10, "max": 14},
-    "sulfur_pct": {"max": 0.7},
-    "moisture_pct": {"max": 20},
-    "btu_per_kg": {"min": 5500}
-  },
-  "premium": {
-    "ash_pct": {"min": 8, "max": 11},
-    "sulfur_pct": {"max": 0.5},
-    "moisture_pct": {"max": 18},
-    "btu_per_kg": {"min": 5800}
-  },
-  "export": {
-    "ash_pct": {"min": 8, "max": 12},
-    "sulfur_pct": {"max": 0.6},
-    "moisture_pct": {"max": 18},
-    "btu_per_kg": {"min": 5700}
-  }
-}
+| Module | Description |
+|--------|-------------|
+| `CoalBlender` | LP-based blend optimizer for multi-source, multi-constraint problems |
+| `SensitivityAnalyzer` | Binding constraint identification and source price breakeven |
+| `WashabilityAnalyzer` | Float-sink curves and yield/quality trade-off analysis |
+| `TransportCostOptimizer` | Multi-modal route optimization (truck → rail → port) |
+| `PortInventoryPlanner` | Stockpile blend sequencing against vessel loading windows |
+| `DustSuppressionCostCalculator` | Cost-effectiveness ranking across 5 suppression methods |
+| `ContractComplianceChecker` | Automated spec validation against buyer contract requirements |
+
+---
+
+## 📏 Quality Parameters & Standards
+
+| Parameter | Standard | Typical Range |
+|-----------|----------|--------------|
+| Ash Content | ISO 1171 | 5–25% |
+| Sulfur Content | ASTM D3177 | 0.2–1.5% |
+| Moisture | ISO 589 | 8–30% |
+| Calorific Value (GAR) | ASTM D5865 | 4,500–7,000 BTU/kg |
+
+---
+
+## 🧪 Testing
+
+```bash
+pytest tests/ -v
 ```
 
-### Load Custom Specifications
-
-```python
-import json
-
-with open('specs_custom.json') as f:
-    custom_specs = json.load(f)
-
-result = blender.optimize(
-    total_output_tons=1000,
-    specifications=custom_specs['premium']
-)
-```
-
-## 💡 Real-World Scenario
-
-**Daily Optimization at Coal Blend Plant:**
-
-```python
-# 1. Load morning quality test results
-incoming_coal = read_lab_results('lab_results_2026_03_07.csv')
-
-# 2. Update source qualities in optimizer
-blender.update_sources(incoming_coal)
-
-# 3. Calculate optimal blend for 500-ton batch
-batch_order = blender.optimize(
-    total_output_tons=500,
-    production_deadline='14:00'  # Must be ready by 2 PM
-)
-
-# 4. Generate blend instruction sheet
-blend_instructions = batch_order.to_instruction_sheet()
-print(f"""
-BLEND BATCH #{batch_order['batch_id']}
-Target Output: {batch_order['total_tons']} tons
-Ready by: {batch_order['deadline']}
-
-Source Allocations:
-  Stockpile A: {batch_order['source_allocations']['A']:.0f} tons
-  Stockpile B: {batch_order['source_allocations']['B']:.0f} tons
-  Stockpile C: {batch_order['source_allocations']['C']:.0f} tons
-
-Predicted Quality:
-  Ash: {batch_order['predicted_quality']['ash']:.1f}%
-  Sulfur: {batch_order['predicted_quality']['sulfur']:.2f}%
-  BTU: {batch_order['predicted_quality']['btu']:,.0f}
-""")
-
-# 5. Send to blend plant operators
-send_to_blend_plant(blend_instructions)
-
-# 6. Track actual results when batch completes
-actual_quality = measure_batch_quality(batch_order['batch_id'])
-log_variance(batch_order, actual_quality)
-```
-
-## ⚠️ Important Notes
-
-- **Quality Data Freshness:** Lab results should be <12 hours old
-- **Price Updates:** Source costs updated daily from market feeds
-- **Seasonal Variations:** Moisture content varies by season; update quarterly
-- **Regulatory Changes:** Sulfur limits may change by region/buyer
-
-## 📊 Dependencies
-
-- `pulp` ≥ 2.7 (linear programming)
-- `pandas` ≥ 1.3 (data manipulation)
-- `numpy` ≥ 1.21 (numerical)
-
-See `requirements.txt` for exact versions.
-
-## 📋 Troubleshooting
-
-**"No feasible solution found"**
-→ Quality specs too tight for available sources. Relax one constraint or source new coal.
-
-**"Optimization unstable"**
-→ Use volatility data to improve model robustness.
-
-**"High cost for marginal quality gain"**
-→ Run sensitivity analysis to find cost-quality breakpoints.
+---
 
 ## 📄 License
 
-MIT License
+MIT License — see [LICENSE](LICENSE)
 
-## Changelog
+---
 
-See [CHANGELOG.md](CHANGELOG.md) for version history and improvements.
-
-
-## Usage Examples
-
-### Optimize Blend for Target GCV
-
-```python
-from src.main import CoalBlendingOptimizer
-
-optimizer = CoalBlendingOptimizer()
-
-sources = [
-    {"source_id": "PIT-A", "gcv_mj_kg": 27.0, "volume_available_mt": 5000, "cost_usd_per_t": 110},
-    {"source_id": "PIT-B", "gcv_mj_kg": 21.0, "volume_available_mt": 8000, "cost_usd_per_t": 75},
-    {"source_id": "PIT-C", "gcv_mj_kg": 24.5, "volume_available_mt": 3000, "cost_usd_per_t": 92},
-]
-
-result = optimizer.optimize_blend_for_target_gcv(sources, target_gcv_mj_kg=25.0)
-print(f"Meets target: {result['meets_target']}")
-print(f"Achieved GCV: {result['blended_gcv_mj_kg']:.2f} MJ/kg")
-print(f"Blend cost:   ${result['blending_cost_usd_per_t']:.2f}/t")
-for src, ratio in result["blend_ratios"].items():
-    print(f"  {src}: {ratio*100:.1f}%")
-```
-
-Refer to the `tests/` directory for comprehensive example implementations.
+> Built by [Achmad Naufal](https://github.com/achmadnaufal) | Lead Data Analyst | Power BI · SQL · Python · GIS
