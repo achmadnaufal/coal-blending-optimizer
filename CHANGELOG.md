@@ -1,6 +1,31 @@
 # Changelog
 
-## [1.8.0] - 2026-03-30
+## [1.8.0]
+# Changelog
+
+## [1.9.0] - 2026-03-31
+
+### Added
+- **Wash Plant Efficiency Calculator** (`src/wash_plant_efficiency_calculator.py`) — DMC/jig coal beneficiation performance assessment
+  - `WashabilityFraction` dataclass: float-sink SG fraction with mass%, ash%, moisture%, CV
+  - `WashPlantFeed` dataclass: plant ID, feed rate (tph), target product ash, separation technology
+  - `WashPlantEfficiencyCalculator` class with linear-up/log-down trapezoidal AUC for theoretical yield
+  - `theoretical_max_yield()`: float-sink curve integration to find max yield at target ash (ASTM D4371)
+  - `organic_efficiency()`: OE = actual/theoretical yield × 100
+  - `compute_ep()`: Ecart Probable Moyen (d75-d25)/2 — sharpness-of-separation metric
+  - `partition_curve()`: theoretical Tromp curve (normal CDF approximation, Horner method)
+  - `two_product_mass_balance()`: feed/product/reject ash-based mass balance with 2% closure check
+  - `evaluate()`: full circuit performance report with Ep classification (excellent/good/fair/poor)
+  - Technology-specific default Ep: DMC 0.025, bath 0.040, jig 0.070, spiral 0.080, flotation 0.100
+  - Recommendations: DMC wear, medium-to-coal ratio, NGM misplacement, load factor optimisation
+- **Unit tests** — 32 new tests in `tests/test_wash_plant_efficiency_calculator.py` (all passing)
+
+### References
+- Wills & Finch (2016) Wills' Mineral Processing Technology. 8th ed. Elsevier.
+- ASTM D4371 Standard Test Method for Determining the Washability of Coal.
+- King (2001) Modelling and Simulation of Mineral Processing Systems.
+
+ - 2026-03-30
 
 ### Added
 - **Dust Suppression Cost Calculator** (`src/dust_suppression_cost_calculator.py`) — annual cost estimation for coal dust suppression on stockpiles and haul roads
