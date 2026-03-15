@@ -421,3 +421,120 @@ class BlendOptimizer:
         blended_metrics["total_blend_volume_mt"] = int(total_volume)
         
         return blended_metrics
+
+    def optimize_blend_for_target_gcv(
+        self,
+        sources: list,
+        target_gcv_mj_kg: float,
+        tolerance: float = 0.5,
+    ) -> dict:
+        """
+        Determine blending ratios to hit a target GCV specification.
+
+        Uses a weighted-average solver to find the simplest two-source blend
+        that meets the target GCV within tolerance.
+
+        Args:
+            sources: List of dicts, each with keys:
+                - source_id (str)
+                - gcv_mj_kg (float)
+                - volume_available_mt (float)
+                - cost_usd_per_t (float, optional)
+            target_gcv_mj_kg: Required GCV of blended product (MJ/kg)
+            tolerance: Acceptable deviation from target (MJ/kg), default ±0.5
+
+        Returns:
+            Dict with blend_ratios (source_id → fraction), blended_gcv,
+            meets_target, total_volume_mt, and blending_cost_usd_per_t
+
+        Raises:
+            ValueError: If sources list is empty or target_gcv_mj_kg <= 0
+
+        Example:
+            >>> sources = [
+            ...     {"source_id": "PIT-A", "gcv_mj_kg": 27.0, "volume_available_mt": 5000, "cost_usd_per_t": 110},
+            ...     {"source_id": "PIT-B", "gcv_mj_kg": 21.0, "volume_available_mt": 8000, "cost_usd_per_t": 75},
+            ... ]
+            >>> result = optimizer.optimize_blend_for_target_gcv(sources, target_gcv_mj_kg=24.0)
+            >>> print(result["blended_gcv"])  # ~24.0
+        """
+        if not sources:
+            raise ValueError("sources list cannot be empty")
+        if target_gcv_mj_kg <= 0:
+            raise ValueError("target_gcv_mj_kg must be positive")
+
+        # Filter out sources with no GCV data
+        valid = [s for s in sources if s.get("gcv_mj_kg") is not None and s.get("volume_available_mt", 0) > 0]
+        if not valid:
+            raise ValueError("No valid sources with gcv_mj_kg and positive volume")
+
+        # Sort by GCV descending
+        valid_sorted = sorted(valid, key=lambda x: x["gcv_mj_kg"], reverse=True)
+
+        best_result = None
+
+        # Try all pairs of sources for two-source blend
+        for i in range(len(valid_sorted)):
+            for j in range(i + 1, len(valid_sorted)):
+                high = valid_sorted[i]
+                low = valid_sorted[j]
+
+                h_gcv = high["gcv_mj_kg"]
+                l_gcv = low["gcv_mj_kg"]
+
+                if h_gcv == l_gcv:
+                    continue
+
+                # Solve: ratio * h_gcv + (1 - ratio) * l_gcv = target
+                ratio_high = (target_gcv_mj_kg - l_gcv) / (h_gcv - l_gcv)
+
+                if not (0 <= ratio_high <= 1):
+                    continue
+
+                ratio_low = 1.0 - ratio_high
+
+                # Check volume constraints
+                vol_high_needed = ratio_high * (high["volume_available_mt"] + low["volume_available_mt"])
+                vol_low_needed = ratio_low * (high["volume_available_mt"] + low["volume_available_mt"])
+
+                if vol_high_needed > high["volume_available_mt"]:
+                    # Scale down to available volumes
+                    scale = high["volume_available_mt"] / vol_high_needed
+                    ratio_high *= scale
+                    ratio_low = 1 - ratio_high
+
+                achieved_gcv = ratio_high * h_gcv + ratio_low * l_gcv
+                deviation = abs(achieved_gcv - target_gcv_mj_kg)
+
+                if deviation <= tolerance:
+                    total_vol = high["volume_available_mt"] * ratio_high + low["volume_available_mt"] * ratio_low
+                    cost_high = high.get("cost_usd_per_t", 0)
+                    cost_low = low.get("cost_usd_per_t", 0)
+                    blended_cost = ratio_high * cost_high + ratio_low * cost_low
+
+                    result = {
+                        "blend_ratios": {
+                            high["source_id"]: round(ratio_high, 4),
+                            low["source_id"]: round(ratio_low, 4),
+                        },
+                        "blended_gcv_mj_kg": round(achieved_gcv, 2),
+                        "target_gcv_mj_kg": target_gcv_mj_kg,
+                        "deviation_mj_kg": round(deviation, 3),
+                        "meets_target": deviation <= tolerance,
+                        "total_volume_mt": round(total_vol, 0),
+                        "blending_cost_usd_per_t": round(blended_cost, 2),
+                    }
+
+                    if best_result is None or deviation < best_result["deviation_mj_kg"]:
+                        best_result = result
+
+        if best_result is None:
+            return {
+                "blend_ratios": {},
+                "blended_gcv_mj_kg": None,
+                "target_gcv_mj_kg": target_gcv_mj_kg,
+                "meets_target": False,
+                "message": "No valid two-source blend found within tolerance",
+            }
+
+        return best_result
