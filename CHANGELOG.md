@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0] - 2026-04-02
+
+### Added
+- **StockpileSegregationPlanner** (`src/stockpile_segregation_planner.py`) — Pad-level coal stockpile segregation optimiser with rank compatibility contamination risk and spontaneous heating safety checks
+- **Unit tests** — new comprehensive test suite in `tests/test_stockpile_segregation_planner.py`
+- **CHANGELOG** updated to v1.10.0
+
 ## [1.8.0]
 # Changelog
 
