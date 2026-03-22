@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.11.0] - 2026-04-03
+
+### Added
+- **DraglineProductivityModel** (`src/dragline_productivity_model.py`) — Computes dragline cycle time, BCM/hr productivity, shift utilisation, monthly overburden removal, and swing penalty factors using Golosinski & Boehm (1987) methodology. Includes sensitivity analysis across swing angles for bench planning.
+- **Unit tests** — 28 tests in `tests/test_dragline_productivity_model.py`.
+
 ## [1.10.0] - 2026-04-02
 
 ### Added
