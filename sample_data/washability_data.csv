@@ -1,0 +1,36 @@
+sample_id,source,mine,depth_m,density,weight_pct,ash_pct,sulfur_pct
+ID-KTL-001,Indonesia,Muara Wahau (Kutai),88.5,1.30,12.0,4.2,0.33
+ID-KTL-001,Indonesia,Muara Wahau (Kutai),88.5,1.40,28.0,9.5,0.51
+ID-KTL-001,Indonesia,Muara Wahau (Kutai),88.5,1.50,25.0,16.1,0.72
+ID-KTL-001,Indonesia,Muara Wahau (Kutai),88.5,1.80,20.0,31.5,1.18
+ID-KTL-001,Indonesia,Muara Wahau (Kutai),88.5,2.00,15.0,54.0,1.90
+ID-SMG-001,Indonesia,Ombilin (Sawahlunto),125.0,1.30,9.0,3.8,0.28
+ID-SMG-001,Indonesia,Ombilin (Sawahlunto),125.0,1.40,25.0,8.2,0.42
+ID-SMG-001,Indonesia,Ombilin (Sawahlunto),125.0,1.50,32.0,14.6,0.61
+ID-SMG-001,Indonesia,Ombilin (Sawahlunto),125.0,1.80,22.0,29.0,1.05
+ID-SMG-001,Indonesia,Ombilin (Sawahlunto),125.0,2.00,12.0,51.5,1.75
+AU-QLD-001,Australia,Queensland Hunter Valley,142.0,1.30,18.0,4.2,0.28
+AU-QLD-001,Australia,Queensland Hunter Valley,142.0,1.40,35.0,9.1,0.44
+AU-QLD-001,Australia,Queensland Hunter Valley,142.0,1.50,25.0,16.5,0.65
+AU-QLD-001,Australia,Queensland Hunter Valley,142.0,1.80,14.0,30.0,1.05
+AU-QLD-001,Australia,Queensland Hunter Valley,142.0,2.00,8.0,52.0,1.60
+AU-NSW-001,Australia,Illawarra (NSW),210.0,1.30,14.0,5.5,0.35
+AU-NSW-001,Australia,Illawarra (NSW),210.0,1.40,30.0,10.8,0.52
+AU-NSW-001,Australia,Illawarra (NSW),210.0,1.50,28.0,18.2,0.74
+AU-NSW-001,Australia,Illawarra (NSW),210.0,1.80,16.0,33.5,1.15
+AU-NSW-001,Australia,Illawarra (NSW),210.0,2.00,12.0,57.0,1.85
+ZA-WTB-001,South Africa,Witbank Field 2,95.0,1.30,12.0,5.5,0.52
+ZA-WTB-001,South Africa,Witbank Field 2,95.0,1.40,28.0,10.2,0.71
+ZA-WTB-001,South Africa,Witbank Field 2,95.0,1.50,30.0,18.0,0.88
+ZA-WTB-001,South Africa,Witbank Field 2,95.0,1.80,18.0,34.5,1.30
+ZA-WTB-001,South Africa,Witbank Field 2,95.0,2.00,12.0,58.0,2.10
+ZA-KZN-001,South Africa,KwaZulu-Natal (Klipspruit),78.0,1.30,8.0,4.8,0.45
+ZA-KZN-001,South Africa,KwaZulu-Natal (Klipspruit),78.0,1.40,22.0,9.0,0.62
+ZA-KZN-001,South Africa,KwaZulu-Natal (Klipspruit),78.0,1.50,35.0,17.5,0.85
+ZA-KZN-001,South Africa,KwaZulu-Natal (Klipspruit),78.0,1.80,20.0,32.0,1.22
+ZA-KZN-001,South Africa,KwaZulu-Natal (Klipspruit),78.0,2.00,15.0,55.5,1.95
+AU-QLD-002,Australia,Bowen Basin (Goonyella),168.0,1.30,20.0,3.9,0.25
+AU-QLD-002,Australia,Bowen Basin (Goonyella),168.0,1.40,32.0,8.8,0.41
+AU-QLD-002,Australia,Bowen Basin (Goonyella),168.0,1.50,26.0,15.9,0.63
+AU-QLD-002,Australia,Bowen Basin (Goonyella),168.0,1.80,14.0,29.2,1.02
+AU-QLD-002,Australia,Bowen Basin (Goonyella),168.0,2.00,8.0,50.5,1.55

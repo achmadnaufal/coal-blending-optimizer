@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.9.0] - 2026-04-14
+
+### Added
+- **WashabilityAnalyzer** (`src/washability.py`) — float-sink washability analysis for coal preparation
+  - `build_float_sink_curve()`: cumulative float/sink curves (density vs ash/sulfur/recovery)
+  - `determine_wash_points()`: optimal wash density identification via ash jump detection
+  - `calculate_wash_yield()`: clean coal yield at target ash % (IPCC/ASTM wash curves)
+  - `compare_coal_sources()`: multi-source washability ranking
+  - `product_quality_matrix()`: product ash/yield/sulfur across density cut range
+  - `critically_sulfur_cut()`: sulfur maximization with ≥60% yield constraint
+- **Unit tests** — 25+ tests in `tests/test_washability.py`
+- **Sample data** — `sample_data/washability_data.csv` (8 samples: ID, AU, ZA)
+
+### References
+- ASTM D5114-90 — Float-Sink Testing of Coal
+- IPCC (2006) Vol. 2 Chapter 4 — Coal Washing Yield Estimation
+
 ## [1.11.0] - 2026-04-03
 
 ### Added

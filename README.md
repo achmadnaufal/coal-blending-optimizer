@@ -18,7 +18,7 @@
 - **Quality Constraint Optimization** — Meet customer specs for ash %, sulfur %, moisture %, BTU/kg via LP
 - **Cost Minimization** — Find the cheapest blend meeting all quality requirements
 - **Sensitivity Analysis** — Identify binding constraints and source price breakeven points
-- **Washability Analysis** — Float-sink washability curves for run-of-mine coal
+- **Washability Analysis** — Float-sink washability curves for run-of-mine coal (WashabilityAnalyzer)
 - **Transport Cost Optimization** — Multi-modal shipping cost optimization (mine → port → customer)
 - **Port Inventory Planner** — Stockpile blending sequences against vessel loading schedules
 - **Dust Suppression Cost Calculator** — 5-method dust suppression cost-effectiveness ranking
@@ -75,6 +75,23 @@ Optimal blend cost: $42,457 ($42.46/t)
   Australia_QLD: 31.4%
   South_Africa_Witbank: 16.3%
 Cost saving vs all-Australia: $9.54/t (-18.3%)
+```
+
+### Washability Analysis Usage
+
+```python
+from src.washability import WashabilityAnalyzer
+
+analyzer = WashabilityAnalyzer()
+curve = analyzer.build_float_sink_curve(fractions=[
+    {"density": 1.3, "weight_pct": 20, "ash_pct": 5.5, "sulfur_pct": 0.4},
+    {"density": 1.4, "weight_pct": 35, "ash_pct": 9.2, "sulfur_pct": 0.5},
+    {"density": 1.5, "weight_pct": 25, "ash_pct": 14.8, "sulfur_pct": 0.7},
+    {"density": 1.8, "weight_pct": 20, "ash_pct": 28.5, "sulfur_pct": 1.2},
+])
+wash_points = analyzer.determine_wash_points(curve, ash_jump_threshold=5.0)
+yield_10pct = analyzer.calculate_wash_yield(curve, target_ash_pct=10.0)
+print(f"Yield at 10% ash: {yield_10pct:.1f}%")
 ```
 
 ---
