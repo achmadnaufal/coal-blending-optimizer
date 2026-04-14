@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.0] - 2026-04-15
+### Added
+- Unit tests with pytest (`tests/test_optimizer.py`) — 31 tests covering blend ratio
+  calculation, quality target validation, cost optimization, constraint satisfaction,
+  and edge cases (single source, impossible targets, immutability)
+- Sample data for demo purposes (`demo/sample_data.csv`) — 15 realistic coal sources
+  across Indonesia, Australia, South Africa, Colombia, Russia, and Mozambique with
+  full quality and cost parameters
+- Comprehensive docstrings for `analyze()`, `run()`, and `to_dataframe()` methods
+- Input validation and edge case handling throughout `BlendOptimizer`
+- Improved README with Quick Start, Sample Data column reference, four example blend
+  scenarios (premium export, low-cost domestic, multi-product, GCV target), and a
+  Running Tests section
+
 ## [0.9.0] - 2026-04-14
 
 ### Added

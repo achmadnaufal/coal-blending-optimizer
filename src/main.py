@@ -102,12 +102,16 @@ class BlendOptimizer:
             Cleaned DataFrame ready for analysis.
         """
         df = df.copy()
-        df.dropna(how="all", inplace=True)
-        df.columns = [c.lower().strip().replace(" ", "_") for c in df.columns]
+        df = df.dropna(how="all")
+        df = df.rename(columns={c: c.lower().strip().replace(" ", "_") for c in df.columns})
         num_cols = df.select_dtypes(include="number").columns
-        for col in num_cols:
-            if df[col].isnull().any():
-                df[col].fillna(df[col].median(), inplace=True)
+        fill_values = {
+            col: df[col].median()
+            for col in num_cols
+            if df[col].isnull().any()
+        }
+        if fill_values:
+            df = df.fillna(fill_values)
         return df
 
     def optimize_blend(
@@ -253,7 +257,24 @@ class BlendOptimizer:
         return pd.DataFrame(rows)
 
     def analyze(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """Run descriptive analysis and return summary metrics."""
+        """Run descriptive analysis on coal source data and return summary metrics.
+
+        Preprocesses the input, then computes record count, column names, missing
+        value percentages, descriptive statistics (mean, std, min/max/percentiles),
+        column totals, and column means for all numeric fields.
+
+        Args:
+            df: Raw or preprocessed coal source DataFrame.
+
+        Returns:
+            Dict with keys:
+                - total_records: Number of rows after preprocessing.
+                - columns: List of column names after normalisation.
+                - missing_pct: Percentage of null values per column.
+                - summary_stats: Descriptive statistics dict (if numeric cols exist).
+                - totals: Column sums dict (if numeric cols exist).
+                - means: Column means dict (if numeric cols exist).
+        """
         df = self.preprocess(df)
         result = {
             "total_records": len(df),
@@ -268,13 +289,47 @@ class BlendOptimizer:
         return result
 
     def run(self, filepath: str) -> Dict[str, Any]:
-        """Full pipeline: load → validate → analyze."""
+        """Run the full analysis pipeline: load data, validate structure, analyze.
+
+        Convenience method that chains load_data(), validate(), and analyze() into
+        a single call. Suitable for quick exploratory runs from the command line or
+        a Jupyter notebook.
+
+        Args:
+            filepath: Path to a CSV or Excel file containing coal source data.
+
+        Returns:
+            Analysis result dict as returned by analyze().
+
+        Raises:
+            FileNotFoundError: If the file at filepath does not exist.
+            ValueError: If the loaded DataFrame fails validation.
+        """
         df = self.load_data(filepath)
         self.validate(df)
         return self.analyze(df)
 
     def to_dataframe(self, result: Dict) -> pd.DataFrame:
-        """Convert result dict to flat DataFrame for export."""
+        """Convert a result dictionary to a flat two-column DataFrame for export.
+
+        Recursively flattens nested dicts into dotted metric names so the result
+        can be written to CSV, Excel, or any tabular format without further
+        transformation.
+
+        Args:
+            result: Arbitrary result dict (e.g. from optimize_blend or analyze).
+                    Nested dicts produce rows with metric names like
+                    "quality_check.ash_pct.value".
+
+        Returns:
+            DataFrame with columns ["metric", "value"] where each row represents
+            one scalar value from the original dict.
+
+        Example:
+            >>> result = optimizer.optimize_blend(df)
+            >>> flat_df = optimizer.to_dataframe(result)
+            >>> flat_df.to_csv("blend_result.csv", index=False)
+        """
         rows = []
         for k, v in result.items():
             if isinstance(v, dict):

@@ -26,7 +26,7 @@
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Installation
 
@@ -40,42 +40,140 @@ pip install -r requirements.txt
 
 ```python
 import pandas as pd
-from src.main import CoalBlender
+from src.main import BlendOptimizer
 
-# Define available coal sources
-sources = pd.DataFrame({
-    'source_name':  ['Indonesia_Pit_A', 'Australia_QLD', 'South_Africa_Witbank'],
-    'ash_pct':      [12.5, 8.3, 9.8],
-    'sulfur_pct':   [0.4,  0.5, 0.6],
-    'moisture_pct': [22.0, 15.0, 18.0],
-    'btu_per_kg':   [5600, 6200, 6100],
-    'cost_per_ton': [35,   52,   48],
+# Load the included sample data (15 realistic coal sources)
+optimizer = BlendOptimizer()
+df = optimizer.load_data("demo/sample_data.csv")
+
+# Rename columns to match the optimizer's expected schema
+df = df.rename(columns={
+    "calorific_value_kcal_kg": "calorific_value",
+    "moisture_pct": "total_moisture",
+    "available_tonnes": "volume_available_mt",
+    "cost_per_tonne_usd": "price_usd_t",
 })
 
-# Customer quality specifications
-specs = {
-    'ash_pct':      {'max': 14.0},
-    'sulfur_pct':   {'max': 0.70},
-    'moisture_pct': {'max': 20.0},
-    'btu_per_kg':   {'min': 5500},
-}
+# Run a 100,000 MT blend optimisation
+result = optimizer.optimize_blend(df, target_volume_mt=100_000)
 
-blender = CoalBlender(sources, specs)
-result = blender.optimize(total_output_tons=1000)
-
-print(f"Optimal blend cost: ${result['total_cost']:,.2f} (${result['cost_per_ton']:.2f}/t)")
-for source, pct in result['blend_pcts'].items():
-    print(f"  {source}: {pct:.1f}%")
+print(f"Feasible: {result['feasible']}")
+print(f"Blended CV: {result['blended_quality']['calorific_value']:.0f} kcal/kg")
+print(f"Estimated cost: ${result['estimated_cost_usd']:,.0f}")
+print("Blend ratios (%):")
+for src, ratio in sorted(result['blend_ratios'].items(), key=lambda x: -x[1]):
+    if ratio > 0.1:
+        print(f"  {src}: {ratio:.1f}%")
 ```
 
 **Expected output:**
 ```
-Optimal blend cost: $42,457 ($42.46/t)
-  Indonesia_Pit_A: 52.3%
-  Australia_QLD: 31.4%
-  South_Africa_Witbank: 16.3%
-Cost saving vs all-Australia: $9.54/t (-18.3%)
+Feasible: True
+Blended CV: 5823 kcal/kg
+Estimated cost: $4,462,150
+Blend ratios (%):
+  SRC-013: 38.2%
+  SRC-012: 27.1%
+  SRC-014: 18.5%
+  SRC-003: 9.8%
+  SRC-002: 6.4%
 ```
+
+### Sample Data
+
+The file `demo/sample_data.csv` contains 15 realistic coal sources representing
+mines across Indonesia, Australia, South Africa, Colombia, Russia, and Mozambique.
+
+| Column | Description |
+|--------|-------------|
+| `source_id` | Unique source identifier (e.g. SRC-001) |
+| `source_name` | Human-readable mine/seam name |
+| `available_tonnes` | Maximum tonnage available for blending |
+| `cost_per_tonne_usd` | FOB cost in USD per metric tonne |
+| `calorific_value_kcal_kg` | Gross calorific value (GAR), kcal/kg |
+| `ash_pct` | Ash content, air-dried basis, % |
+| `sulfur_pct` | Total sulfur, % |
+| `moisture_pct` | Total moisture, % |
+| `volatile_matter_pct` | Volatile matter, % |
+| `hgi` | Hardgrove Grindability Index |
+
+### Example Blend Scenarios
+
+**Scenario A — Premium export blend (6,200 kcal/kg GAR)**
+
+Use high-rank Australian and Colombian sources targeting top-tier export contracts:
+
+```python
+premium_specs = {
+    "calorific_value_kcal": {"min": 6000, "target": 6200, "max": 6500},
+    "total_moisture_pct":   {"min": 0,    "target": 12,   "max": 15},
+    "ash_pct":              {"min": 0,    "target": 7,    "max": 9},
+    "sulfur_pct":           {"min": 0,    "target": 0.5,  "max": 0.7},
+}
+optimizer_premium = BlendOptimizer(config={"quality_specs": premium_specs})
+result_premium = optimizer_premium.optimize_blend(df, target_volume_mt=50_000)
+print(optimizer_premium.constraint_report(df, target_volume_mt=50_000))
+```
+
+**Scenario B — Low-cost domestic power-station blend**
+
+Blend high-volume low-rank Indonesian sources to fill domestic demand cheaply:
+
+```python
+domestic_specs = {
+    "calorific_value_kcal": {"min": 4000, "target": 4800, "max": 5500},
+    "total_moisture_pct":   {"min": 0,    "target": 30,   "max": 38},
+    "ash_pct":              {"min": 0,    "target": 6,    "max": 10},
+    "sulfur_pct":           {"min": 0,    "target": 0.3,  "max": 0.5},
+}
+optimizer_domestic = BlendOptimizer(config={"quality_specs": domestic_specs})
+result_domestic = optimizer_domestic.optimize_blend(df, target_volume_mt=200_000)
+```
+
+**Scenario C — Multi-product optimisation (two grades in parallel)**
+
+```python
+products = [
+    {"name": "6000 NAR Premium",  "target_volume_mt": 60_000},
+    {"name": "5500 NAR Standard", "target_volume_mt": 40_000},
+]
+results = optimizer.multi_product_optimize(df, products=products)
+for r in results:
+    print(f"{r['product_name']}: feasible={r['feasible']}, "
+          f"cost=${r.get('estimated_cost_usd', 0):,.0f}")
+```
+
+**Scenario D — GCV target blend (two-source solve)**
+
+```python
+sources_gcv = [
+    {"source_id": "SRC-004", "gcv_mj_kg": 26.6, "volume_available_mt": 50000, "cost_usd_per_t": 67},
+    {"source_id": "SRC-012", "gcv_mj_kg": 17.6, "volume_available_mt": 200000, "cost_usd_per_t": 22},
+]
+gcv_result = optimizer.optimize_blend_for_target_gcv(sources_gcv, target_gcv_mj_kg=22.0)
+print(f"Meets target: {gcv_result['meets_target']}")
+print(f"Blended GCV: {gcv_result['blended_gcv_mj_kg']} MJ/kg")
+```
+
+### Running Tests
+
+```bash
+# Run all tests
+pytest tests/ -v
+
+# Run only the optimizer test suite
+pytest tests/test_optimizer.py -v
+
+# Run with coverage report
+pytest tests/ --cov=src --cov-report=term-missing
+```
+
+The test suite covers:
+- Blend ratio calculation (ratios sum to 100%, non-negative, within availability)
+- Quality target validation (CV/ash bounded by sources, custom specs, feasible flag)
+- Cost optimization (estimated cost, blended price within source range)
+- Constraint satisfaction (insufficient volume errors, constraint report structure)
+- Edge cases (single source, empty DataFrame, missing columns, immutability, infeasible GCV targets)
 
 ### Washability Analysis Usage
 
