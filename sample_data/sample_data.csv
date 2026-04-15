@@ -1,0 +1,16 @@
+source_id,source_name,cv_kcal,total_moisture_pct,ash_pct,sulfur_pct,available_tonnes,cost_per_tonne
+S001,Pit Melak Alpha,6250,8.2,4.8,0.38,45000,87.50
+S002,Muara Wahau Seam B,5920,11.5,7.2,0.65,72000,71.00
+S003,Samarinda Stockpile C,6080,9.8,5.9,0.48,60000,79.50
+S004,Sangatta Deep D,5780,13.2,8.1,0.78,38000,67.00
+S005,Bontang Blend E,6150,8.9,5.2,0.42,55000,83.00
+S006,Balikpapan Yard F,5850,12.0,7.8,0.72,48000,69.50
+S007,Pit Melak Premium G,6320,7.5,4.2,0.35,30000,92.00
+S008,Tanah Bumbu Seam H,5700,14.1,8.5,0.82,65000,63.00
+S009,Satui ROM Pad J,5980,10.4,6.5,0.55,42000,74.00
+S010,Banjarmasin Port K,6100,9.1,5.5,0.44,51000,81.00
+S011,Adaro Overburden L,5650,15.0,9.0,0.88,70000,59.00
+S012,Tabang Seam M,6200,8.5,4.9,0.40,33000,86.00
+S013,Kutai Timur N,5870,11.8,7.4,0.68,46000,70.00
+S014,Berau Coal P,6280,7.9,4.5,0.36,28000,90.00
+S015,Paser Blend Q,5950,10.8,6.8,0.58,62000,73.50

@@ -1,8 +1,45 @@
-data/*.csv
-data/*.xlsx
+# Python
 __pycache__/
-*.pyc
-.env
+*.py[cod]
+*$py.class
+*.so
 *.egg-info/
+*.egg
 dist/
 build/
+eggs/
+*.whl
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing / Coverage
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# Environment
+.env
+.env.local
+
+# Data outputs (keep sample_data/)
+data/*.csv
+data/*.xlsx
+data/*.json
+!data/.gitkeep
