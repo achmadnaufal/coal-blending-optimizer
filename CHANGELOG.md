@@ -1,18 +1,46 @@
 # Changelog
 
-## [0.2.0] - 2026-04-15
+## [0.2.0] - 2026-04-16
+
 ### Added
-- Unit tests with pytest (`tests/test_optimizer.py`) — 31 tests covering blend ratio
-  calculation, quality target validation, cost optimization, constraint satisfaction,
-  and edge cases (single source, impossible targets, immutability)
-- Sample data for demo purposes (`demo/sample_data.csv`) — 15 realistic coal sources
-  across Indonesia, Australia, South Africa, Colombia, Russia, and Mozambique with
-  full quality and cost parameters
-- Comprehensive docstrings for `analyze()`, `run()`, and `to_dataframe()` methods
-- Input validation and edge case handling throughout `BlendOptimizer`
-- Improved README with Quick Start, Sample Data column reference, four example blend
-  scenarios (premium export, low-cost domestic, multi-product, GCV target), and a
-  Running Tests section
+
+- **Comprehensive input validation** in `BlendOptimizer.validate()`:
+  - Rejects negative calorific value, ash, sulfur, moisture, and volume values
+  - Rejects percentage columns exceeding physical upper bounds (e.g. moisture > 100 %)
+  - Rejects inverted quality spec bounds (min > max) — raises at construction and at
+    `optimize_blend()` call time
+  - Rejects zero or negative `target_volume_mt` in `optimize_blend()`
+  - Rejects empty product list in `multi_product_optimize()`
+  - Rejects negative volumes in `calculate_blend_environmental_impact()`
+  - Rejects unsupported file formats in `load_data()` (only .csv, .xlsx, .xls)
+- **`tests/test_blend_optimization.py`** — 78 new pytest tests organised into 9
+  classes covering blending optimisation, quality calculations, constraint checking,
+  input validation (negative values, percentages >100, empty sources, infeasible
+  specs), immutability guarantees, environmental impact metrics, GCV-target
+  optimisation, demo CSV smoke tests, and sensitivity analysis.
+- **Module-level constants** `QUALITY_UPPER_BOUNDS` and `REQUIRED_QUALITY_COLUMNS`
+  exported from `src/main.py` for use in external validators and tests.
+- **`BlendOptimizer._validate_quality_specs()`** private static method that checks
+  all quality spec dicts for inverted bounds before any optimisation run.
+- **`demo/sample_data.csv`** updated to 15 realistic Indonesian sub-bituminous coal
+  sources (GAR 3800-6500 kcal/kg) with the canonical column set:
+  `source_id`, `mine_name`, `calorific_value_kcal`, `total_moisture_pct`,
+  `ash_content_pct`, `sulfur_pct`, `volatile_matter_pct`, `available_tonnes`,
+  `cost_per_tonne_usd`.
+
+### Improved
+
+- **Type hints** — full `from __future__ import annotations` + explicit annotations
+  on every public method signature in `BlendOptimizer`.
+- **Immutable patterns** — `optimize_blend()`, `sensitivity_analysis()`,
+  `multi_product_optimize()`, `constraint_report()`, and `analyze()` all operate on
+  internal `df.copy()` / `df.assign()` clones; the caller's DataFrame is never
+  mutated.
+- **Docstrings** — all public methods now have Google-style docstrings with `Args`,
+  `Returns`, `Raises`, and `Example` sections.
+- **`test_gcv_optimizer.py`** — fixed broken import (`CoalBlendingOptimizer` →
+  `BlendOptimizer`) and corrected fixture volumes so the lever-rule constraint is
+  not accidentally violated in the midpoint and three-source tests.
 
 ## [0.9.0] - 2026-04-14
 

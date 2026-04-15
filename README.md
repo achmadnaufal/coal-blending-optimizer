@@ -1,5 +1,7 @@
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
+![Tests](https://img.shields.io/badge/tests-433%20passed-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-80%25%2B-green)
 ![Last Commit](https://img.shields.io/github/last-commit/achmadnaufal/coal-blending-optimizer)
 
 # Coal Blending Optimizer
@@ -10,14 +12,15 @@ Score-based coal blend optimization engine that finds optimal mix ratios from mu
 
 ## Features
 
-- **Multi-source blend optimization** -- score-weighted allocation across N coal sources with volume constraints
-- **Quality compliance checking** -- validates blended product against contract specs (ASTM/ISO basis) with PASS/WARN/FAIL status
-- **Constraint reporting** -- shows headroom to spec limits and flags binding parameters
-- **Sensitivity analysis** -- sweeps quality parameters to evaluate blend robustness
-- **Multi-product optimization** -- sequential blend planning for multiple product grades from shared stockpiles
-- **Washability analysis** -- float-sink curve construction, wash-point identification, and yield-at-ash calculations
-- **Transport cost optimization** -- mine-to-port multi-modal logistics cost modeling
-- **Environmental impact estimation** -- blended SO2, NOx, ash, and carbon intensity metrics
+- **Multi-source blend optimization** — score-weighted allocation across N coal sources with volume constraints
+- **Quality compliance checking** — validates blended product against contract specs (ASTM/ISO basis) with PASS/WARN/FAIL status
+- **Constraint reporting** — shows headroom to spec limits and flags binding parameters
+- **Sensitivity analysis** — sweeps quality parameters to evaluate blend robustness
+- **Multi-product optimization** — sequential blend planning for multiple product grades from shared stockpiles
+- **Washability analysis** — float-sink curve construction, wash-point identification, and yield-at-ash calculations
+- **Transport cost optimization** — mine-to-port multi-modal logistics cost modeling
+- **Environmental impact estimation** — blended SO2, NOx, ash, and carbon intensity metrics
+- **Comprehensive input validation** — rejects negative quality values, percentages >100, inverted spec bounds, and empty sources
 
 ## Quick Start
 
@@ -47,78 +50,6 @@ python examples/cli_demo.py
 python examples/cli_demo.py --data sample_data/stockpiles.csv --target-volume 80000
 ```
 
-### Sample Output
-
-```
-=================================================================
-  COAL BLENDING OPTIMIZER
-=================================================================
-
-[1] Loaded 8 coal sources from sample_data/stockpiles.csv
-    Columns: ['source_id', 'calorific_value', 'total_moisture', 'ash_pct', 'sulfur_pct', 'volume_available_mt', 'price_usd_t']
-
-[2] Source Quality Summary:
-    Source     CV (kcal)    Moisture%    Ash%     Sulfur%    Avail (MT)   Price $/t
-    ---------- ------------ ------------ -------- ---------- ------------ ---------
-    SEAM_A     6,250        8.2          4.8      0.38       45,000       87.5
-    SEAM_B     5,920        11.5         7.2      0.65       72,000       71.0
-    SEAM_C     6,080        9.8          5.9      0.48       60,000       79.5
-    SEAM_D     5,780        13.2         8.1      0.78       38,000       67.0
-    SEAM_E     6,150        8.9          5.2      0.42       55,000       83.0
-    SEAM_F     5,850        12.0         7.8      0.72       48,000       69.5
-    SEAM_G     6,320        7.5          4.2      0.35       30,000       92.0
-    SEAM_H     5,700        14.1         8.5      0.82       65,000       63.0
-
-[3] Optimizing blend for 100,000 MT target volume...
-
-[4] Blend Ratios:
-    Source     Ratio (%)    Volume (MT)
-    ---------- ------------ --------------
-    SEAM_A     15.04        15,038.5
-    SEAM_B     11.50        11,501.9
-    SEAM_C     13.49        13,493.4
-    SEAM_D     9.94         9,937.3
-    SEAM_E     14.38        14,379.0
-    SEAM_F     10.67        10,672.9
-    SEAM_G     15.70        15,695.8
-    SEAM_H     9.28         9,281.2
-
-[5] Blended Quality:
-    calorific_value      6045.269
-    total_moisture       10.236
-    ash_pct              6.179
-    sulfur_pct           0.542
-
-[6] Quality Compliance Check:
-    Parameter            Value      Min      Max      Target   Status
-    -------------------- ---------- -------- -------- -------- ------
-    calorific_value      6045.269   5800     6300     6000     PASS
-    total_moisture       10.236     0        14       10       PASS
-    ash_pct              6.179      0        8        6        PASS
-    sulfur_pct           0.542      0        0.8      0.5      PASS
-
-    Feasible: YES - All specs met
-    Estimated Cost: $7,834,980.59
-    Blended Price:  $78.35/t
-
-[7] Constraint Report:
-    Parameter            Blended    Target     Headroom   Status
-    -------------------- ---------- ---------- ---------- --------
-    calorific_value      6045.269   6000.0     254.731    OK
-    total_moisture       10.236     10.0       3.764      OK
-    ash_pct              6.179      6.0        1.821      OK
-    sulfur_pct           0.542      0.5        0.258      OK
-
-[8] Blend Compliance Report:
-    Blend ID:       BLEND-2024-001
-    Overall Status: PASS
-    Compliance:     100%
-
-=================================================================
-  Optimization complete.
-=================================================================
-```
-
 ### Python API
 
 ```python
@@ -131,7 +62,119 @@ result = optimizer.optimize_blend(df, target_volume_mt=100_000)
 print(result["blend_ratios"])    # {source_id: ratio_pct}
 print(result["blended_quality"]) # weighted-average quality values
 print(result["feasible"])        # True if all specs met
+print(result["estimated_cost_usd"])  # total blend cost USD
 ```
+
+### Multi-product optimization
+
+```python
+products = [
+    {"name": "6000 NAR Export",  "target_volume_mt": 60_000},
+    {"name": "5500 NAR Domestic","target_volume_mt": 40_000},
+]
+results = optimizer.multi_product_optimize(df, products=products)
+for r in results:
+    print(r["product_name"], r["feasible"], r["blended_quality"])
+```
+
+### GCV-target blend
+
+```python
+sources = [
+    {"source_id": "KAL-HCV", "gcv_mj_kg": 27.2, "volume_available_mt": 10_000, "cost_usd_per_t": 55},
+    {"source_id": "KAL-LCV", "gcv_mj_kg": 19.8, "volume_available_mt": 20_000, "cost_usd_per_t": 25},
+]
+result = optimizer.optimize_blend_for_target_gcv(sources, target_gcv_mj_kg=24.0)
+print(result["blend_ratios"])          # {source_id: fraction}
+print(result["blended_gcv_mj_kg"])     # 24.0
+print(result["meets_target"])          # True
+```
+
+### Sensitivity analysis
+
+```python
+sensitivity = optimizer.sensitivity_analysis(df, param="ash_pct", delta_pct=10.0)
+print(sensitivity[["delta_pct", "blended_cv", "feasible"]])
+```
+
+## Sample Output
+
+```
+=================================================================
+  COAL BLENDING OPTIMIZER
+=================================================================
+
+[1] Loaded 8 coal sources from sample_data/stockpiles.csv
+    Columns: ['source_id', 'calorific_value', 'total_moisture', 'ash_pct',
+              'sulfur_pct', 'volume_available_mt', 'price_usd_t']
+
+[2] Optimizing blend for 100,000 MT target volume...
+
+[3] Blend Ratios:
+    Source     Ratio (%)    Volume (MT)
+    ---------- ------------ --------------
+    SEAM_A     15.04        15,038.5
+    SEAM_B     11.50        11,501.9
+    SEAM_C     13.49        13,493.4
+    SEAM_G     15.70        15,695.8
+
+[4] Blended Quality:
+    calorific_value      6045.269
+    total_moisture       10.236
+    ash_pct              6.179
+    sulfur_pct           0.542
+
+[5] Quality Compliance Check:
+    Parameter            Value      Min      Max      Target   Status
+    -------------------- ---------- -------- -------- -------- ------
+    calorific_value      6045.269   5800     6300     6000     PASS
+    total_moisture       10.236     0        14       10       PASS
+    ash_pct              6.179      0        8        6        PASS
+    sulfur_pct           0.542      0        0.8      0.5      PASS
+
+    Feasible: YES - All specs met
+    Estimated Cost: $7,834,980.59 | Blended Price: $78.35/t
+
+=================================================================
+  Optimization complete.
+=================================================================
+```
+
+## Sample Data
+
+The demo dataset `demo/sample_data.csv` contains 15 realistic Indonesian sub-bituminous
+coal sources (GAR range 3800–6500 kcal/kg) sourced from Kalimantan and Sumatra mines.
+
+| Column | Unit | Description |
+|--------|------|-------------|
+| `source_id` | — | Unique source identifier |
+| `mine_name` | — | Mine / pit name |
+| `calorific_value_kcal` | kcal/kg | Gross calorific value (GAR) |
+| `total_moisture_pct` | % | Total moisture (as-received) |
+| `ash_content_pct` | % | Ash content (air-dried) |
+| `sulfur_pct` | % | Total sulfur |
+| `volatile_matter_pct` | % | Volatile matter |
+| `available_tonnes` | MT | Available stockpile tonnage |
+| `cost_per_tonne_usd` | USD/t | Mine gate or FOB cost |
+
+## Running Tests
+
+```bash
+# Install test dependencies (already in requirements.txt)
+pip install pytest
+
+# Run all tests with verbose output
+pytest tests/ -v
+
+# Run only the core optimizer tests
+pytest tests/test_blend_optimization.py -v
+
+# Run with coverage report
+pip install pytest-cov
+pytest tests/ --cov=src --cov-report=term-missing
+```
+
+Expected output: **433+ tests passing** across 15 test modules.
 
 ## Tech Stack
 
@@ -139,7 +182,7 @@ print(result["feasible"])        # True if all specs met
 |-----------|-----------|
 | Language | Python 3.9+ |
 | Data | pandas, NumPy |
-| Optimization | SciPy (linear programming) |
+| Optimization | SciPy |
 | CLI Output | Rich |
 | Testing | pytest |
 
@@ -173,19 +216,39 @@ flowchart LR
 ```
 coal-blending-optimizer/
   src/
-    main.py                        # Core BlendOptimizer class
-    blend_compliance_checker.py    # Contract spec compliance
-    washability.py                 # Float-sink washability curves
-    transport_cost_optimizer.py    # Mine-to-port logistics
-    data_generator.py              # Sample data generation
-  examples/
-    cli_demo.py                    # CLI entry point
-    basic_usage.py                 # Minimal Python usage
+    main.py                          # Core BlendOptimizer class (type-hinted, validated)
+    blend_compliance_checker.py      # Contract spec compliance with WARN bands
+    washability.py                   # Float-sink washability curves
+    washability_analyzer.py          # DMS yield-vs-ash curve modelling
+    transport_cost_optimizer.py      # Mine-to-port multi-modal logistics
+    contract_compliance_checker.py   # Price adjustment + rejection logic
+    port_inventory_planner.py        # Terminal inventory projection
+    dust_suppression_cost_calculator.py
+    wash_plant_efficiency_calculator.py
+    dragline_productivity_model.py
+    stockpile_segregation_planner.py
+    data_generator.py
+  demo/
+    sample_data.csv                  # 15 Indonesian sub-bituminous coal sources
+    sample_output.txt                # Example CLI run output
   sample_data/
-    stockpiles.csv                 # 8-source stockpile dataset
-    sample_data.csv                # 15-source extended dataset
-  tests/                           # pytest test suite
+    stockpiles.csv                   # 8-source stockpile dataset
+    sample_data.csv                  # 15-source extended dataset
+  examples/
+    cli_demo.py                      # CLI entry point
+    basic_usage.py                   # Minimal Python usage
+  tests/
+    test_blend_optimization.py       # 78 tests: validation, quality, immutability
+    test_optimizer.py                # 31 tests: ratio, cost, constraints
+    test_main.py                     # Core API tests
+    test_blend_compliance_checker.py
+    test_washability.py / test_washability_analyzer.py
+    test_transport_cost_optimizer.py
+    test_contract_compliance_checker.py
+    test_port_inventory_planner.py
+    ...and more
   requirements.txt
+  CHANGELOG.md
 ```
 
 ---
