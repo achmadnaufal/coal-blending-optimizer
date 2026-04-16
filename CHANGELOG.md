@@ -1,5 +1,25 @@
 # Changelog
 
+## [Unreleased] - 2026-04-17
+
+### Added
+
+- **`src/carbon_intensity_calculator.py`** — Scope-1 CO2e emission intensity
+  calculator for coal blends. Computes weighted-average kg CO2e per tonne
+  produced, broken down into diesel combustion, fugitive CH4, and explosive
+  detonation residuals. Follows IPCC AR6 GWP100 (CH4 = 29.8) and IPCC 2006 GL
+  Vol. 2 mobile combustion defaults. Supports optional batch volume input to
+  produce absolute CO2e tonnes. All inputs validated at system boundaries;
+  immutable frozen dataclasses used throughout.
+- **`tests/test_carbon_intensity_calculator.py`** — 31 pytest tests covering
+  property correctness, weighted arithmetic, single/multi-source blends,
+  volume_mt absolute CO2e, determinism, immutability, intensity_for_source
+  helper, edge cases (zero explosive, 100 % single source), and comprehensive
+  boundary validation (empty blend, bad fractions, unregistered source, negative
+  factors, duplicate profiles). Parametrized over 4 fraction splits.
+- **README section "New: Scope-1 Carbon Intensity Calculator"** — step-by-step
+  usage guide with code examples and expected output.
+
 ## [0.2.0] - 2026-04-16
 
 ### Added

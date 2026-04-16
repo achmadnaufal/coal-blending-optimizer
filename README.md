@@ -97,6 +97,93 @@ sensitivity = optimizer.sensitivity_analysis(df, param="ash_pct", delta_pct=10.0
 print(sensitivity[["delta_pct", "blended_cv", "feasible"]])
 ```
 
+## New: Scope-1 Carbon Intensity Calculator
+
+Calculate Scope-1 CO2-equivalent emission intensity (kg CO2e per tonne produced)
+for any coal blend, broken down by diesel combustion, fugitive methane (CH4),
+and explosive detonation residuals. Follows IPCC AR6 GWP100 factors (CH4 = 29.8).
+
+### Step-by-step usage
+
+**Step 1 — Define an emission profile per source**
+
+```python
+from src.carbon_intensity_calculator import SourceEmissionProfile
+
+# Kalimantan open-cut source — higher diesel intensity, moderate CH4
+seam_a = SourceEmissionProfile(
+    source_id="SEAM_A",
+    diesel_litres_per_tonne=4.0,   # L diesel / tonne produced
+    ch4_m3_per_tonne=1.2,          # m3 fugitive CH4 / tonne mined
+    explosive_kg_co2e_per_tonne=0.05,
+)
+
+# Sumatra source — lower strip ratio, less diesel
+seam_b = SourceEmissionProfile(
+    source_id="SEAM_B",
+    diesel_litres_per_tonne=3.0,
+    ch4_m3_per_tonne=0.6,
+)
+```
+
+**Step 2 — Build the calculator**
+
+```python
+from src.carbon_intensity_calculator import CarbonIntensityCalculator
+
+calc = CarbonIntensityCalculator([seam_a, seam_b])
+```
+
+**Step 3 — Define the blend recipe and compute intensity**
+
+```python
+from src.carbon_intensity_calculator import BlendSource
+
+blend = [
+    BlendSource("SEAM_A", fraction=0.6),
+    BlendSource("SEAM_B", fraction=0.4),
+]
+
+result = calc.calculate(blend, volume_mt=100_000)
+
+print(f"Blend intensity : {result.blended_intensity_kg_co2e_per_tonne:.2f} kg CO2e/t")
+print(f"  Diesel share  : {result.diesel_contribution_kg_co2e_per_tonne:.2f} kg CO2e/t")
+print(f"  CH4 share     : {result.ch4_contribution_kg_co2e_per_tonne:.2f} kg CO2e/t")
+print(f"  Explosive     : {result.explosive_contribution_kg_co2e_per_tonne:.2f} kg CO2e/t")
+print(f"Total batch CO2e: {result.total_co2e_tonnes:.1f} t CO2e")
+print(f"Per-source      : {result.source_breakdown}")
+```
+
+**Expected output (approximate)**
+
+```
+Blend intensity : 36.60 kg CO2e/t
+  Diesel share  : 18.55 kg CO2e/t
+  CH4 share     : 18.01 kg CO2e/t
+  Explosive     : 0.04 kg CO2e/t
+Total batch CO2e: 3660.0 t CO2e
+Per-source      : {'SEAM_A': 21.96, 'SEAM_B': 14.64}
+```
+
+**Step 4 — Query a single source intensity**
+
+```python
+intensity = calc.intensity_for_source("SEAM_A")
+print(f"SEAM_A standalone: {intensity:.2f} kg CO2e/t")
+```
+
+### Inputs validated at boundaries
+
+- Empty profile list or blend recipe → `ValueError`
+- Blend fractions not summing to 1.0 (±0.001) → `ValueError`
+- Negative diesel / CH4 / explosive factors → `ValueError`
+- Diesel consumption > 50 L/t or CH4 > 25 m3/t → `ValueError`
+- `volume_mt` <= 0 → `ValueError`
+- Unregistered `source_id` in blend → `ValueError`
+- Duplicate `source_id` in profile list → `ValueError`
+
+---
+
 ## Sample Output
 
 ```
