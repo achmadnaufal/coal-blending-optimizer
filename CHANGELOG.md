@@ -1,5 +1,34 @@
 # Changelog
 
+## [Unreleased] - 2026-04-18
+
+### Added
+
+- **`src/blend_scenario_comparator.py`** — What-if analysis module that
+  evaluates and ranks multiple named blend recipes (``ScenarioRecipe``)
+  side-by-side against a single quality spec set and a single source
+  catalogue. Returns an immutable ``ComparisonReport`` containing per-scenario
+  weighted-average quality (CV, ash, sulfur, moisture), blended cost per
+  tonne (USD), feasibility flag, binding spec parameter, per-parameter
+  headroom-to-spec, and a ranked list with a winner. Ranking objectives:
+  ``cost_per_tonne``, ``cv_kcal``, ``ash_pct``, ``sulfur_pct``. Designed for
+  pre-shipment what-ifs, sensitivity perturbations, and customer bid
+  evaluation — complements (does not replace) ``BlendOptimizer``.
+- **`tests/test_blend_scenario_comparator.py`** — 21 pytest tests covering
+  happy-path multi-scenario ranking, single-source ("all-same-source") blend,
+  weighted arithmetic correctness, descending CV ranking, headroom sign
+  convention, infeasible-scenario winner=None, no-specs all-feasible mode,
+  determinism, frozen-dataclass immutability, and boundary validation
+  (zero-tonnage fraction, fractions not summing to 1, missing required key,
+  negative quality, inverted spec bounds, empty sources, empty scenarios,
+  unknown source_id reference, duplicate scenario names, duplicate
+  source_ids, invalid ranking objective).
+- **README section "New: Blend Scenario Comparator (what-if analysis)"** —
+  step-by-step usage with runnable example and validated boundary list.
+- **`src/__init__.py`** — exports ``BlendScenarioComparator``,
+  ``ScenarioRecipe``, ``ScenarioResult``, and ``ComparisonReport`` for
+  ergonomic top-level imports.
+
 ## [Unreleased] - 2026-04-17
 
 ### Added

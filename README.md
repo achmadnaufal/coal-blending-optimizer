@@ -184,6 +184,88 @@ print(f"SEAM_A standalone: {intensity:.2f} kg CO2e/t")
 
 ---
 
+## New: Blend Scenario Comparator (what-if analysis)
+
+Evaluate multiple named blend recipes side-by-side against one quality spec
+and one stockpile catalogue. Returns weighted-average properties, blended
+cost per tonne, compliance flags, headroom-to-spec, and a ranked winner by
+the chosen objective. Use when you already have candidate recipes (planner
+proposals, customer-supplied bids, sensitivity perturbations) and need a
+deterministic, immutable comparison report — not a fresh optimisation.
+
+### Step-by-step usage
+
+**Step 1 — Define the source catalogue**
+
+```python
+from src import BlendScenarioComparator, ScenarioRecipe
+
+sources = [
+    {"source_id": "A", "cv_kcal": 6300, "ash_pct": 4.5, "sulfur_pct": 0.35,
+     "total_moisture_pct": 8.0,  "cost_per_tonne": 90.0},
+    {"source_id": "B", "cv_kcal": 5800, "ash_pct": 8.0, "sulfur_pct": 0.70,
+     "total_moisture_pct": 13.0, "cost_per_tonne": 65.0},
+    {"source_id": "C", "cv_kcal": 6000, "ash_pct": 6.0, "sulfur_pct": 0.50,
+     "total_moisture_pct": 10.5, "cost_per_tonne": 78.0},
+]
+```
+
+**Step 2 — Define a single quality spec set**
+
+```python
+specs = {
+    "cv_kcal":    {"min": 5900},
+    "ash_pct":    {"max": 7.5},
+    "sulfur_pct": {"max": 0.6},
+}
+comparator = BlendScenarioComparator(sources, specs=specs)
+```
+
+**Step 3 — Define candidate scenarios and compare**
+
+```python
+scenarios = [
+    ScenarioRecipe("premium",  {"A": 0.7, "C": 0.3}),
+    ScenarioRecipe("balanced", {"A": 0.5, "C": 0.5}),
+    ScenarioRecipe("dirty",    {"B": 1.0}),  # fails specs
+]
+
+report = comparator.compare(scenarios, ranking_objective="cost_per_tonne")
+
+print(f"Winner          : {report.winner}")
+print(f"Ranking order   : {report.ranked_names}")
+for r in report.scenarios:
+    print(
+        f"  {r.name:<10} cost=${r.blended_cost_per_tonne:.2f}/t  "
+        f"feasible={r.feasible}  binding={r.binding_parameter}  "
+        f"headroom={r.spec_headroom}"
+    )
+```
+
+**Expected output**
+
+```
+Winner          : balanced
+Ranking order   : ('balanced', 'premium', 'dirty')
+  premium    cost=$86.40/t  feasible=True  binding=sulfur_pct  headroom={...}
+  balanced   cost=$84.00/t  feasible=True  binding=sulfur_pct  headroom={...}
+  dirty      cost=$65.00/t  feasible=False binding=cv_kcal     headroom={'cv_kcal': -100.0, ...}
+```
+
+### Inputs validated at boundaries
+
+- Empty sources or scenarios list → `ValueError`
+- Duplicate `source_id` in catalogue or duplicate scenario names → `ValueError`
+- Source missing any of `cv_kcal`, `ash_pct`, `sulfur_pct`,
+  `total_moisture_pct`, `cost_per_tonne` → `ValueError`
+- Negative or non-numeric quality / cost values → `ValueError`
+- Recipe fraction <= 0 or > 1, or fractions not summing to 1.0 (±0.001) → `ValueError`
+- Inverted spec bounds (`min > max`) → `ValueError`
+- Unsupported `ranking_objective` → `ValueError`
+- Scenario referencing an unregistered `source_id` → `ValueError`
+
+---
+
 ## Sample Output
 
 ```
