@@ -266,6 +266,99 @@ Ranking order   : ('balanced', 'premium', 'dirty')
 
 ---
 
+## New: LP-based blend optimizer (`scipy.optimize.linprog`)
+
+While the default `BlendOptimizer` uses a fast score-weighted allocator, the new `LPBlendOptimizer` formulates the problem as a true Linear Program and solves it with HiGHS via `scipy.optimize.linprog`. This finds the *provably cost-minimising* blend subject to every min/max quality constraint and per-stockpile availability cap.
+
+```python
+import pandas as pd
+from src.lp_blend_optimizer import LPBlendOptimizer
+
+df = pd.read_csv("demo/sample_data.csv")
+
+lp = LPBlendOptimizer()
+result = lp.solve(
+    df,
+    target_tonnage=100_000,
+    constraints={
+        "calorific_value_kcal_kg": {"min": 5800},
+        "ash_pct": {"max": 10.0},
+        "sulphur_pct": {"max": 0.5},
+    },
+)
+
+print(result.feasible)               # True
+print(result.total_cost_usd)         # e.g. 3_125_400.00
+print(result.allocation_tonnes)      # {stockpile_id: tonnes}
+print(result.binding_constraints)    # e.g. ['ash_pct<=max(10.0)']
+```
+
+The result dataclass is immutable and includes a `binding_constraints` list so you know which specs are driving cost.
+
+## New: Cost-per-GJ calculator
+
+Thermal coal is traded on tonnage but burned on energy, so the economically correct comparison metric is USD per gigajoule delivered. The `cost_per_gj_calculator` module provides four utilities:
+
+```python
+from src.cost_per_gj_calculator import (
+    cost_per_gj,
+    delivered_cost_per_gj,
+    rank_by_cost_per_gj,
+    blended_cost_per_gj,
+)
+
+# Single-coal cost/GJ (auto-detects kcal/kg vs MJ/kg)
+cost_per_gj(cost_per_tonne_usd=60.0, calorific_value=6000)       # 2.39 USD/GJ
+
+# Delivered cost with freight + handling stacked in
+delivered_cost_per_gj(
+    mine_gate_usd_per_tonne=55.0,
+    calorific_value=6000,
+    freight_usd_per_tonne=12.0,
+    handling_usd_per_tonne=3.0,
+)  # -> DeliveredCostBreakdown(total_usd_per_tonne=70.0, cost_per_gj_usd=2.79, ...)
+
+# Rank stockpiles by cheapest energy first
+ranked = rank_by_cost_per_gj(df, id_column="source_id")
+
+# Energy-weighted blended cost/GJ of a realised allocation
+blended_cost_per_gj(
+    allocation_tonnes={"A": 40_000, "B": 60_000},
+    stockpile_data={
+        "A": {"cost_per_tonne_usd": 55, "calorific_value": 6200},
+        "B": {"cost_per_tonne_usd": 30, "calorific_value": 5000},
+    },
+)
+```
+
+---
+
+## Optimization Formulation
+
+The LP optimizer solves:
+
+```
+Minimise     sum_i  c_i * x_i                (cost per tonne * tonnes from i)
+
+Subject to   sum_i x_i = T                   (total blend tonnage)
+             0 <= x_i <= a_i                 (availability caps per stockpile)
+             sum_i (q_min - q_i) x_i <= 0    (each quality lower bound)
+             sum_i (q_i - q_max) x_i <= 0    (each quality upper bound)
+```
+
+where
+- `x_i` = tonnes drawn from stockpile `i` (decision variable)
+- `c_i` = cost per tonne of stockpile `i`
+- `q_i` = quality parameter value (CV, ash, sulphur, moisture, ...) for stockpile `i`
+- `a_i` = available tonnage at stockpile `i`
+- `T` = required blend tonnage
+
+The min/max quality rows are the standard linearisation of the weighted-average constraint `q_min <= sum(q_i x_i)/sum(x_i) <= q_max`, valid when `sum(x_i) = T > 0` (enforced by the equality constraint).
+
+Solver: HiGHS dual-simplex (default in SciPy >= 1.6). Typical runtime on the 15-row demo dataset is under 10 ms.
+
+---
+
 ## Sample Output
 
 ```

@@ -1,5 +1,49 @@
 # Changelog
 
+## [Unreleased] - 2026-04-19
+
+### Added
+
+- **`src/lp_blend_optimizer.py`** — LP-based blend optimizer using
+  `scipy.optimize.linprog` with the HiGHS backend. Formulates the blend
+  problem as a true Linear Program (minimise cost subject to a fixed
+  tonnage target, per-stockpile availability caps, and min/max
+  weighted-average quality constraints) and returns an immutable
+  `LPBlendResult` dataclass with the provably cost-minimising allocation,
+  blended quality on every numeric column, total and per-tonne cost, and
+  a list of binding constraints active at the optimum. Includes a
+  functional wrapper `optimize_blend_lp()` returning a plain dict, full
+  column-alias handling (`cv`, `ash`, `sulfur`, `source_id`, `price_usd_t`,
+  ...), and explicit edge-case handling for empty pools, zero-tonnage
+  stockpiles, single-stockpile degenerate cases, insufficient supply,
+  NaN in constraint columns, and solver infeasibility.
+- **`src/cost_per_gj_calculator.py`** — Cost-per-gigajoule (USD/GJ)
+  calculator for thermal coal. Provides: (a) `cost_per_gj()` for a single
+  coal grade with automatic kcal/kg vs MJ/kg unit detection and optional
+  as-fired moisture penalty, (b) `delivered_cost_per_gj()` stacking
+  mine-gate + freight + handling into a `DeliveredCostBreakdown`,
+  (c) `rank_by_cost_per_gj()` to sort stockpiles by cheapest energy
+  first with NaN-safe handling of invalid rows, and (d)
+  `blended_cost_per_gj()` computing the energy-weighted (not
+  tonnage-weighted) blended USD/GJ of a realised allocation.
+- **`tests/test_lp_blend_optimizer.py`** — 13 pytest tests covering
+  feasible cost-minimisation, infeasibility from over-tight constraints,
+  insufficient supply, single-stockpile pass/fail, empty DataFrame,
+  non-positive target tonnage, NaN rejection in constraint columns,
+  missing-column rejection, input-DataFrame immutability, column-alias
+  recognition, the functional wrapper, and zero-tonnage-stockpile
+  filtering.
+- **`tests/test_cost_per_gj_calculator.py`** — 17 pytest tests covering
+  kcal/kg and MJ/kg conversion, unit auto-detection, moisture penalty
+  arithmetic, negative-input validation, NaN rejection, delivered-cost
+  component stacking, ranking with invalid rows, empty-input errors,
+  energy-weighted blended cost arithmetic, zero-tonnage-entry ignoring,
+  and missing-stockpile-reference validation.
+- **README sections "LP-based blend optimizer", "Cost-per-GJ calculator",
+  and "Optimization Formulation"** — full LP formulation in standard
+  form, runnable examples for all four cost-per-GJ utilities, and
+  solver / runtime notes.
+
 ## [Unreleased] - 2026-04-18
 
 ### Added
