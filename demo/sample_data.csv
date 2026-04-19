@@ -1,16 +1,16 @@
-source_id,mine_name,calorific_value_kcal,total_moisture_pct,ash_content_pct,sulfur_pct,volatile_matter_pct,available_tonnes,cost_per_tonne_usd
-ID-KAL-001,Kalimantan Tengah Pit A,4850,32.5,6.2,0.28,43.8,180000,24.50
-ID-KAL-002,Kalimantan Timur Pit B,5120,28.0,7.5,0.32,42.1,140000,27.80
-ID-KAL-003,Kalimantan Selatan Pit C,5480,24.5,8.1,0.38,41.2,95000,31.20
-ID-KAL-004,Kalimantan Timur Pit D,5820,20.8,9.4,0.41,40.5,75000,36.50
-ID-KAL-005,Kalimantan Tengah Pit E,6050,17.2,9.8,0.35,39.8,60000,41.75
-ID-SUM-001,Sumatra Selatan Pit A,4380,36.0,5.8,0.25,44.5,220000,21.00
-ID-SUM-002,Sumatra Selatan Pit B,4620,33.5,6.5,0.27,43.9,165000,23.50
-ID-SUM-003,Sumatra Selatan Pit C,5010,29.0,7.2,0.30,42.6,110000,26.80
-ID-KAL-006,Kalimantan Barat Premium,6180,16.0,8.8,0.45,38.2,52000,45.00
-ID-KAL-007,Kalimantan Timur HCV,6350,14.5,7.2,0.55,37.5,45000,52.00
-ID-KAL-008,Kalimantan Selatan HCV,6480,13.2,6.8,0.50,36.8,38000,57.50
-ID-SUM-004,Sumatra Tengah Select,5650,22.0,8.5,0.35,40.8,85000,34.00
-ID-KAL-009,Kalimantan Timur Export,6210,15.8,7.6,0.48,37.9,48000,47.20
-ID-SUM-005,Sumatra Utara Mid-Rank,4950,30.2,7.0,0.29,43.0,130000,25.90
-ID-KAL-010,Muara Teweh Block B,5380,25.5,8.2,0.36,41.5,78000,29.60
+stockpile_id,mine_site,tonnage_available,cv_kcal_kg,ash_pct,sulfur_pct,moisture_pct,cost_per_tonne_usd
+SP-KAL-001,Kalimantan Tengah Pit A,180000,4850,6.2,0.28,32.5,44.50
+SP-KAL-002,Kalimantan Timur Pit B,140000,5120,7.5,0.32,28.0,47.80
+SP-KAL-003,Kalimantan Selatan Pit C,95000,5480,8.1,0.38,24.5,51.20
+SP-KAL-004,Kalimantan Timur Pit D,75000,5820,9.4,0.41,20.8,56.50
+SP-KAL-005,Kalimantan Tengah Pit E,60000,6050,9.8,0.35,17.2,61.75
+SP-SUM-001,Sumatra Selatan Pit A,220000,4380,5.8,0.25,36.0,41.00
+SP-SUM-002,Sumatra Selatan Pit B,165000,4620,6.5,0.27,33.5,43.50
+SP-SUM-003,Sumatra Selatan Pit C,110000,5010,7.2,0.30,29.0,46.80
+SP-KAL-006,Kalimantan Barat Premium,52000,6180,8.8,0.45,16.0,65.00
+SP-KAL-007,Kalimantan Timur HCV,45000,6350,7.2,0.55,14.5,72.00
+SP-KAL-008,Kalimantan Selatan HCV,38000,6480,6.8,0.50,13.2,77.50
+SP-SUM-004,Sumatra Tengah Select,85000,5650,8.5,0.35,22.0,54.00
+SP-KAL-009,Kalimantan Timur Export,48000,6210,7.6,0.48,15.8,67.20
+SP-SUM-005,Sumatra Utara Mid-Rank,130000,4950,7.0,0.29,30.2,45.90
+SP-KAL-010,Muara Teweh Block B,78000,5380,8.2,0.36,25.5,49.60

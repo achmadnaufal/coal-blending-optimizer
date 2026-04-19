@@ -643,9 +643,8 @@ class TestDemoSampleData:
     def test_csv_has_required_columns(self, optimizer, demo_csv_path):
         df = optimizer.load_data(demo_csv_path)
         required = {
-            "source_id", "mine_name", "calorific_value_kcal",
-            "total_moisture_pct", "ash_content_pct", "sulfur_pct",
-            "volatile_matter_pct", "available_tonnes", "cost_per_tonne_usd",
+            "stockpile_id", "mine_site", "tonnage_available", "cv_kcal_kg",
+            "ash_pct", "sulfur_pct", "moisture_pct", "cost_per_tonne_usd",
         }
         assert required.issubset(set(df.columns)), (
             f"Missing columns: {required - set(df.columns)}"
@@ -654,25 +653,24 @@ class TestDemoSampleData:
     def test_cv_values_in_indonesian_range(self, optimizer, demo_csv_path):
         """All calorific values should be in a realistic Indonesian coal range."""
         df = optimizer.load_data(demo_csv_path)
-        assert (df["calorific_value_kcal"] >= 3800).all(), "CV below 3800 kcal/kg"
-        assert (df["calorific_value_kcal"] <= 7000).all(), "CV above 7000 kcal/kg"
+        assert (df["cv_kcal_kg"] >= 3800).all(), "CV below 3800 kcal/kg"
+        assert (df["cv_kcal_kg"] <= 7000).all(), "CV above 7000 kcal/kg"
 
     def test_no_negative_values_in_quality_columns(self, optimizer, demo_csv_path):
         df = optimizer.load_data(demo_csv_path)
         quality_cols = [
-            "calorific_value_kcal", "total_moisture_pct",
-            "ash_content_pct", "sulfur_pct", "volatile_matter_pct",
+            "cv_kcal_kg", "moisture_pct", "ash_pct", "sulfur_pct",
         ]
         for col in quality_cols:
             assert (df[col] >= 0).all(), f"Negative values found in '{col}'"
 
     def test_all_available_tonnes_positive(self, optimizer, demo_csv_path):
         df = optimizer.load_data(demo_csv_path)
-        assert (df["available_tonnes"] > 0).all()
+        assert (df["tonnage_available"] > 0).all()
 
     def test_source_ids_are_unique(self, optimizer, demo_csv_path):
         df = optimizer.load_data(demo_csv_path)
-        assert df["source_id"].nunique() == 15, "source_id values must be unique"
+        assert df["stockpile_id"].nunique() == 15, "stockpile_id values must be unique"
 
 
 # ===========================================================================

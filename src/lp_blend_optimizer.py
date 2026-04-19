@@ -94,7 +94,9 @@ COLUMN_ALIASES: Dict[str, str] = {
     "source_id": "stockpile_id",
     "id": "stockpile_id",
     "calorific_value": "calorific_value_kcal_kg",
+    "calorific_value_kcal": "calorific_value_kcal_kg",
     "cv": "calorific_value_kcal_kg",
+    "cv_kcal_kg": "calorific_value_kcal_kg",
     "gcv": "calorific_value_kcal_kg",
     "ash": "ash_pct",
     "ash_content_pct": "ash_pct",
@@ -106,6 +108,7 @@ COLUMN_ALIASES: Dict[str, str] = {
     "tonnes": "tonnage",
     "volume_available_mt": "tonnage",
     "available_tonnes": "tonnage",
+    "tonnage_available": "tonnage",
     "cost": "cost_per_tonne_usd",
     "price_usd_t": "cost_per_tonne_usd",
 }
@@ -248,7 +251,7 @@ class LPBlendOptimizer:
         self._check_required_columns(working)
         working = self._coerce_numeric(working)
 
-        constraints = dict(constraints or {})
+        constraints = self._normalise_constraint_keys(constraints or {})
         self._check_constraint_columns(working, constraints)
 
         # Drop stockpiles with zero or NaN availability — they cannot contribute.
@@ -400,6 +403,20 @@ class LPBlendOptimizer:
             for col in df.columns
         }
         return df.rename(columns=renamed).copy()
+
+    @staticmethod
+    def _normalise_constraint_keys(
+        constraints: Mapping[str, Mapping[str, float]],
+    ) -> Dict[str, Mapping[str, float]]:
+        """Remap user-supplied constraint keys through :data:`COLUMN_ALIASES`.
+
+        Lets callers use any alias for quality columns (``cv_kcal_kg``,
+        ``sulfur_pct``, ...) without knowing the canonical name.
+        """
+        return {
+            COLUMN_ALIASES.get(k.lower().strip(), k.lower().strip()): v
+            for k, v in constraints.items()
+        }
 
     @staticmethod
     def _check_required_columns(df: pd.DataFrame) -> None:

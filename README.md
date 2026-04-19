@@ -12,14 +12,17 @@ Score-based coal blend optimization engine that finds optimal mix ratios from mu
 
 ## Features
 
-- **Multi-source blend optimization** — score-weighted allocation across N coal sources with volume constraints
+- **Cost-minimising LP optimizer** — `scipy.optimize.linprog` (HiGHS) solver that finds the provably cheapest blend meeting min/max quality bands on CV, ash, sulfur, and moisture
+- **Revenue-maximising LP optimizer** — finds the most profitable blend under a linear index-linked price formula (base price plus per-kcal premium, minus per-pct ash/sulfur/moisture penalties)
+- **Blend scenario comparator** — side-by-side ranking of named candidate recipes against a single quality spec
+- **Score-weighted allocator** — fast, feasibility-aware allocator across N stockpiles with volume constraints
 - **Quality compliance checking** — validates blended product against contract specs (ASTM/ISO basis) with PASS/WARN/FAIL status
 - **Constraint reporting** — shows headroom to spec limits and flags binding parameters
 - **Sensitivity analysis** — sweeps quality parameters to evaluate blend robustness
 - **Multi-product optimization** — sequential blend planning for multiple product grades from shared stockpiles
+- **Cost-per-GJ and carbon-intensity calculators** — USD/GJ delivered-cost comparison and Scope-1 CO2e per tonne
 - **Washability analysis** — float-sink curve construction, wash-point identification, and yield-at-ash calculations
 - **Transport cost optimization** — mine-to-port multi-modal logistics cost modeling
-- **Environmental impact estimation** — blended SO2, NOx, ash, and carbon intensity metrics
 - **Comprehensive input validation** — rejects negative quality values, percentages >100, inverted spec bounds, and empty sources
 
 ## Quick Start
@@ -37,6 +40,45 @@ pip install -r requirements.txt
 # Run the optimizer
 python examples/cli_demo.py
 ```
+
+## Quickstart: meet a buyer spec from the demo dataset
+
+This runnable snippet loads the 15-row Indonesian demo catalogue, defines a
+typical export buyer specification (CV >= 5800 kcal/kg, ash <= 8.0 %, sulfur
+<= 0.6 %), and computes the cost-minimising blend of 100,000 tonnes.
+
+```python
+import pandas as pd
+from src.lp_blend_optimizer import LPBlendOptimizer
+
+df = pd.read_csv("demo/sample_data.csv")
+
+buyer_spec = {
+    "cv_kcal_kg":  {"min": 5800},
+    "ash_pct":     {"max": 8.0},
+    "sulfur_pct":  {"max": 0.6},
+}
+
+result = LPBlendOptimizer().solve(
+    df, target_tonnage=100_000, constraints=buyer_spec
+)
+
+if result.feasible:
+    print(f"Status:       {result.status}")
+    print(f"Cost / tonne: ${result.cost_per_tonne_usd:,.2f}")
+    print(f"Total cost:   ${result.total_cost_usd:,.2f}")
+    print(f"Binding:      {result.binding_constraints}")
+    print("Allocation (tonnes):")
+    for pile, tonnes in result.allocation_tonnes.items():
+        if tonnes > 0:
+            print(f"  {pile:<14} {tonnes:>10,.1f}")
+else:
+    # Infeasibility is reported, never raised: inspect the diagnostic.
+    print(f"Infeasible: {result.message}")
+```
+
+To *maximise margin* instead of minimise cost, swap in the
+`RevenueBlendOptimizer` and pass a price formula (see below).
 
 ## Usage
 
@@ -295,6 +337,53 @@ print(result.binding_constraints)    # e.g. ['ash_pct<=max(10.0)']
 
 The result dataclass is immutable and includes a `binding_constraints` list so you know which specs are driving cost.
 
+## New: Revenue-maximising blend optimizer (index-linked pricing)
+
+`RevenueBlendOptimizer` finds the blend that maximises *margin*
+(`revenue - cost`) under a linear index-linked price formula, reflecting how
+thermal coal is actually priced on Newcastle/API/ICI indices — a base price
+plus a per-kcal CV premium, less per-percentage-point penalties for ash,
+sulfur, and moisture. Because every price term is linear in quality, the
+problem stays a Linear Program and is solved with the same HiGHS backend
+(no new dependencies).
+
+```python
+import pandas as pd
+from src.revenue_blend_optimizer import (
+    IndexPriceFormula, RevenueBlendOptimizer,
+)
+
+df = pd.read_csv("demo/sample_data.csv")
+
+# Index-linked formula pinned to a 5,800 kcal/kg benchmark.
+formula = IndexPriceFormula(
+    base_price_usd_per_tonne=90.0,
+    kcal_premium_usd_per_kcal=0.012, reference_cv_kcal_kg=5800,
+    ash_penalty_usd_per_pct=1.5,     reference_ash_pct=8.0,
+    sulfur_penalty_usd_per_pct=30.0, reference_sulfur_pct=0.5,
+)
+
+# Hard rejection clauses the buyer will not tolerate at any price.
+hard_spec = {"ash_pct": {"max": 12.0}, "sulfur_pct": {"max": 0.8}}
+
+result = RevenueBlendOptimizer().solve(
+    df, target_tonnage=100_000,
+    price_formula=formula, constraints=hard_spec,
+)
+
+print(f"Margin/t:     ${result.margin_per_tonne_usd:,.2f}")
+print(f"Price/t:      ${result.price_per_tonne_usd:,.2f}")
+print(f"Cost/t:       ${result.cost_per_tonne_usd:,.2f}")
+print(f"Total margin: ${result.total_margin_usd:,.2f}")
+print(f"Binding:      {result.binding_constraints}")
+```
+
+Use this when you are a *seller*: the LP optimizer picks the blend that
+earns the most for every tonne delivered, not the cheapest blend that clears
+the spec. All inputs are validated at construction time (non-negative
+penalties, rate-and-reference paired, numeric types) and the result
+dataclass is frozen.
+
 ## New: Cost-per-GJ calculator
 
 Thermal coal is traded on tonnage but burned on energy, so the economically correct comparison metric is USD per gigajoule delivered. The `cost_per_gj_calculator` module provides four utilities:
@@ -405,19 +494,22 @@ Solver: HiGHS dual-simplex (default in SciPy >= 1.6). Typical runtime on the 15-
 ## Sample Data
 
 The demo dataset `demo/sample_data.csv` contains 15 realistic Indonesian sub-bituminous
-coal sources (GAR range 3800–6500 kcal/kg) sourced from Kalimantan and Sumatra mines.
+coal stockpiles (CV range 4380–6480 kcal/kg) sourced from Kalimantan and Sumatra mines.
 
 | Column | Unit | Description |
 |--------|------|-------------|
-| `source_id` | — | Unique source identifier |
-| `mine_name` | — | Mine / pit name |
-| `calorific_value_kcal` | kcal/kg | Gross calorific value (GAR) |
-| `total_moisture_pct` | % | Total moisture (as-received) |
-| `ash_content_pct` | % | Ash content (air-dried) |
+| `stockpile_id` | — | Unique stockpile identifier |
+| `mine_site` | — | Mine / pit name |
+| `tonnage_available` | MT | Available stockpile tonnage |
+| `cv_kcal_kg` | kcal/kg | Gross calorific value (GAR) |
+| `ash_pct` | % | Ash content |
 | `sulfur_pct` | % | Total sulfur |
-| `volatile_matter_pct` | % | Volatile matter |
-| `available_tonnes` | MT | Available stockpile tonnage |
-| `cost_per_tonne_usd` | USD/t | Mine gate or FOB cost |
+| `moisture_pct` | % | Total moisture (as-received) |
+| `cost_per_tonne_usd` | USD/t | Mine-gate cost |
+
+The column names above are aliased to the optimizer's canonical names
+automatically, so either schema works with `LPBlendOptimizer` and
+`RevenueBlendOptimizer`.
 
 ## Running Tests
 

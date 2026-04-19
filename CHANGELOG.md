@@ -1,5 +1,61 @@
 # Changelog
 
+## [Unreleased] - 2026-04-20
+
+### Added
+
+- **`src/revenue_blend_optimizer.py`** — Revenue-maximising blend optimizer
+  under index-linked pricing. Uses `scipy.optimize.linprog` (HiGHS) to solve
+  for the allocation maximising `revenue - cost` per tonne, where revenue
+  is computed from a linear `IndexPriceFormula` (base price + per-kcal CV
+  premium − per-percentage-point ash/sulfur/moisture penalties, pinned to
+  configurable reference grades). Returns an immutable `RevenueBlendResult`
+  dataclass exposing realised per-tonne price/cost/margin, total
+  revenue/cost/margin, allocation in both tonnes and percent, weighted-
+  average blended quality on every numeric column, and the list of binding
+  hard quality constraints. Includes a `maximise_blend_revenue()`
+  functional wrapper returning a JSON-ready dict, full column-alias
+  compatibility with `LPBlendOptimizer`, and validation on every input
+  boundary (empty DataFrame, non-positive target tonnage, NaN in any
+  referenced column, missing required columns, orphan pricing rates
+  without references, negative penalty rates, all-zero-availability pools,
+  and solver infeasibility).
+- **`tests/test_revenue_blend_optimizer.py`** — 25 pytest tests covering
+  weighted-average blend arithmetic on 2- and 3-stockpile cases, analytic
+  verification of the margin-maximising allocation, hard-constraint
+  feasibility and binding-constraint detection, `total_margin =
+  total_revenue - total_cost` invariance, infeasibility and
+  insufficient-supply diagnostics, zero-weight and NaN edge cases,
+  `IndexPriceFormula` validation (non-positive base price, orphan rate,
+  negative penalty), frozen-dataclass immutability, input-DataFrame
+  immutability, functional wrapper, and column-alias acceptance.
+- **`demo/sample_data.csv`** — replaced with a 15-row Indonesian stockpile
+  catalogue using the canonical column schema
+  (`stockpile_id, mine_site, tonnage_available, cv_kcal_kg, ash_pct,
+  sulfur_pct, moisture_pct, cost_per_tonne_usd`). Values remain in the
+  realistic Kalimantan/Sumatra sub-bituminous range
+  (CV 4380–6480 kcal/kg, ash 5.8–9.8 %, S 0.25–0.55 %, TM 13–36 %,
+  cost 41–77 USD/t).
+- **README sections "Quickstart: meet a buyer spec from the demo dataset"
+  and "Revenue-maximising blend optimizer (index-linked pricing)"** —
+  runnable quickstart loading `demo/sample_data.csv`, defining a
+  CV >= 5800 / ash <= 8.0 / S <= 0.6 buyer spec, solving with
+  `LPBlendOptimizer`, plus a full revenue-optimiser example with a
+  concrete `IndexPriceFormula`. Features list refreshed to match the
+  implemented modules.
+
+### Changed
+
+- **`src/lp_blend_optimizer.py`** — extended `COLUMN_ALIASES` to recognise
+  the new canonical column names (`tonnage_available`, `cv_kcal_kg`) and
+  the legacy `calorific_value_kcal` alias, so existing CSVs and the new
+  demo CSV both work without caller-side renaming.
+- **`src/__init__.py`** — re-exports `IndexPriceFormula`,
+  `RevenueBlendOptimizer`, `RevenueBlendResult`, and
+  `maximise_blend_revenue` at package level.
+- **`tests/test_blend_optimization.py`** — `TestDemoSampleData` assertions
+  updated to match the refreshed `demo/sample_data.csv` column schema.
+
 ## [Unreleased] - 2026-04-19
 
 ### Added
