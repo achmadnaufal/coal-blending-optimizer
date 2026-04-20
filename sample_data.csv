@@ -1,0 +1,16 @@
+coal_source,tonnes,ash_pct,sulfur_pct,calorific_value_kcal_kg,moisture_pct,cost_usd_per_tonne
+Indonesia_Pit_A,120000,12.5,0.42,5650,22.0,38.50
+Indonesia_Pit_B,85000,11.2,0.38,5820,20.5,41.20
+Indonesia_Pit_C,60000,9.8,0.35,6050,18.2,44.75
+Australia_Queensland,50000,7.2,0.55,6350,14.0,67.00
+Australia_Hunter_Valley,45000,6.5,0.48,6480,13.5,71.50
+Australia_Bowen_Basin,55000,7.0,0.52,6420,13.8,69.80
+South_Africa_Witbank,40000,9.0,0.65,6180,16.5,58.00
+South_Africa_Highveld,35000,10.2,0.72,5980,17.8,55.50
+Colombia_Drummond,30000,6.8,0.62,6520,12.0,72.00
+Colombia_Cerrejon,28000,6.2,0.58,6600,11.5,74.50
+Russia_Kuzbass,25000,8.5,0.45,6280,14.8,62.00
+Kalimantan_Low_Rank,200000,5.5,0.30,4200,35.0,22.00
+Kalimantan_Mid_Rank,150000,6.8,0.32,4950,28.5,30.50
+Sumatra_Sub_Bituminous,90000,6.2,0.28,4650,31.0,26.75
+Mozambique_Moatize,20000,5.8,0.50,6700,10.5,78.00
