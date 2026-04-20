@@ -15,6 +15,7 @@ Score-based coal blend optimization engine that finds optimal mix ratios from mu
 - **Sensitivity analysis** — sweeps quality parameters to evaluate blend robustness
 - **Multi-product optimization** — sequential blend planning for multiple product grades from shared stockpiles
 - **Cost-per-GJ and carbon-intensity calculators** — USD/GJ delivered-cost comparison and Scope-1 CO2e per tonne
+- **Slagging & fouling index calculator** — ash-chemistry R_s / R_f indices (Attig-Duzy 1969, Bryers 1996) with low/medium/high/severe classification for boiler-deposition risk screening
 - **Washability analysis** — float-sink curve construction, wash-point identification, and yield-at-ash calculations
 - **Transport cost optimization** — mine-to-port multi-modal logistics cost modeling
 - **Comprehensive input validation** — rejects negative quality values, percentages >100, inverted spec bounds, and empty sources
@@ -242,6 +243,81 @@ print(f"SEAM_A standalone: {intensity:.2f} kg CO2e/t")
 - `volume_mt` <= 0 → `ValueError`
 - Unregistered `source_id` in blend → `ValueError`
 - Duplicate `source_id` in profile list → `ValueError`
+
+---
+
+## New: Slagging & Fouling Index Calculator
+
+Screens coals (and blends) for boiler ash-deposition risk using classic
+oxide-chemistry indices from Attig & Duzy (1969) and Bryers (1996). Computes
+B/A ratio, silica ratio S/A, Fe2O3/CaO, slagging index `R_s = (B/A) * S_dry`,
+and fouling index `R_f = (B/A) * (Na2O + K2O)` (bituminous) or `R_f = Na2O`
+(lignitic). Each index is classified `low` / `medium` / `high` / `severe`
+per Bryers's Table 2.5 bands.
+
+### Step-by-step usage
+
+```python
+import pandas as pd
+from src.slagging_fouling_index import (
+    AshComposition,
+    BlendFraction,
+    CoalRank,
+    SlaggingFoulingIndexCalculator,
+)
+
+df = pd.read_csv("sample_data/slagging_fouling_samples.csv")
+
+profiles = [
+    AshComposition(
+        source_id=row.source_id,
+        sio2=row.sio2_pct, al2o3=row.al2o3_pct, fe2o3=row.fe2o3_pct,
+        cao=row.cao_pct, mgo=row.mgo_pct, na2o=row.na2o_pct,
+        k2o=row.k2o_pct, tio2=row.tio2_pct,
+        sulfur_dry_pct=row.sulfur_dry_pct,
+        rank=CoalRank(row.rank),
+    )
+    for row in df.itertuples()
+]
+
+calc = SlaggingFoulingIndexCalculator(profiles)
+
+# Screen every source on its own
+for sid, report in calc.compare_sources().items():
+    print(f"{sid:12} R_s={report.slagging_index:.2f} ({report.slagging_class})"
+          f"  R_f={report.fouling_index:.2f} ({report.fouling_class})")
+
+# Evaluate a 60/40 blend of a low-risk Australian bituminous and a
+# high-Fe Indonesian lignitic to bring slagging back under control
+blend_report = calc.evaluate([
+    BlendFraction("MTK_BULGA", 0.6),
+    BlendFraction("BAN_LAHAT", 0.4),
+])
+print(f"Blended R_s={blend_report.slagging_index:.2f} "
+      f"({blend_report.slagging_class})")
+print(f"Blended R_f={blend_report.fouling_index:.2f} "
+      f"({blend_report.fouling_class})")
+print(f"B/A={blend_report.base_acid_ratio:.2f}, "
+      f"S/A={blend_report.silica_ratio:.2f}")
+```
+
+### Classification bands (Bryers 1996)
+
+| Class  | R_s (slagging) | R_f (fouling) |
+|--------|----------------|----------------|
+| low    | < 0.6          | < 0.2          |
+| medium | 0.6 – 2.0      | 0.2 – 0.5      |
+| high   | 2.0 – 2.6      | 0.5 – 1.0      |
+| severe | >= 2.6         | >= 1.0         |
+
+### Validated boundaries
+
+- Oxide sum outside [70 %, 105 %] → `ValueError` (incomplete / unit error)
+- Any oxide < 0 or > 100 wt-% → `ValueError`
+- `sulfur_dry_pct` outside [0, 15] → `ValueError`
+- Blend fractions not summing to 1.0 (±0.001) → `ValueError`
+- Duplicate `source_id` in profile list or blend → `ValueError`
+- Unregistered `source_id` referenced in blend → `ValueError`
 
 ---
 

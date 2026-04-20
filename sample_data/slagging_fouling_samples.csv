@@ -1,0 +1,17 @@
+source_id,mine_site,country,rank,sio2_pct,al2o3_pct,fe2o3_pct,cao_pct,mgo_pct,na2o_pct,k2o_pct,tio2_pct,sulfur_dry_pct
+KPC_PRIMA,Kaltim Prima Coal,Indonesia,bituminous,56.2,27.1,6.4,2.8,1.9,0.4,1.3,1.2,0.55
+ADR_ECO,Adaro Envirocoal,Indonesia,bituminous,48.5,21.3,10.8,8.7,3.1,1.1,0.9,1.1,0.18
+BUMI_ARR,Arutmin BUMI,Indonesia,bituminous,52.8,24.6,8.2,5.3,2.7,0.7,1.4,1.0,0.82
+BRM_MELA,Berau Melawan,Indonesia,bituminous,54.1,25.8,7.5,3.9,2.3,0.5,1.2,1.3,0.48
+BAN_LAHAT,Banko Lahat Sumsel,Indonesia,lignitic,42.3,17.2,13.5,10.8,3.4,2.2,0.6,0.9,0.35
+MTK_BULGA,Mt Arthur Bulga,Australia,bituminous,62.4,28.9,4.1,1.5,0.9,0.3,1.5,1.4,0.62
+PEAK_DWNS,Peak Downs,Australia,bituminous,59.1,26.4,5.3,1.9,1.3,0.4,1.7,1.3,0.48
+CURRAG_CK,Curragh North,Australia,bituminous,60.8,27.3,4.8,1.7,1.1,0.3,1.6,1.4,0.71
+HCV_BLAIR,Blair Athol HCV,Australia,bituminous,57.6,26.1,5.9,2.4,1.6,0.4,1.4,1.3,0.52
+SBS_GOONY,South Blackwater Goonyella,Australia,bituminous,55.3,24.7,7.1,3.8,2.0,0.5,1.3,1.2,0.68
+NSW_LIDDL,Liddell NSW,Australia,bituminous,58.9,27.6,5.4,2.1,1.4,0.4,1.5,1.4,0.55
+PIT_SANGA,Sangatta Pit 3,Indonesia,bituminous,49.7,22.4,11.5,6.8,2.9,0.9,1.1,1.0,1.15
+ETB_TEGU,East Tabang Tegu,Indonesia,lignitic,39.8,16.5,15.2,12.1,3.6,2.4,0.5,0.8,0.42
+SAM_MTBS,Samarangau Pit MB,Indonesia,lignitic,41.6,17.9,14.4,11.3,3.3,2.1,0.7,0.9,0.38
+JEM_LEMBU,Jembayan Lembu,Indonesia,bituminous,53.4,24.9,7.8,4.6,2.5,0.6,1.3,1.1,0.75
+GLD_GUNUN,Golden Gunung,Indonesia,bituminous,55.9,26.3,6.7,3.2,2.1,0.5,1.4,1.2,0.58

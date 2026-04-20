@@ -1,5 +1,55 @@
 # Changelog
 
+## [Unreleased] - 2026-04-21
+
+### Added
+
+- **`src/slagging_fouling_index.py`** — Ash-chemistry-based slagging (R_s)
+  and fouling (R_f) index calculator for coal blends. Computes the
+  base/acid ratio B/A = (Fe2O3 + CaO + MgO + Na2O + K2O) /
+  (SiO2 + Al2O3 + TiO2), the silica ratio S/A = SiO2 / (SiO2 + Fe2O3 +
+  CaO + MgO), Fe2O3/CaO, the Attig & Duzy (1969) slagging index
+  `R_s = (B/A) * S_dry`, and the Bryers (1996) fouling index
+  `R_f = (B/A) * (Na2O + K2O)` (bituminous) or `R_f = Na2O` (lignitic),
+  with classification into `low` / `medium` / `high` / `severe` per
+  Bryers Table 2.5. Blended indices are computed from mass-weighted
+  oxide averages (not averaged ratios — a well-known error). Provides
+  frozen `AshComposition`, `BlendFraction`, `SlaggingFoulingReport`
+  dataclasses, a `CoalRank` enum, the `SlaggingFoulingIndexCalculator`
+  with `evaluate`, `evaluate_source`, and `compare_sources` helpers,
+  plus module-level `classify_slagging()` and `classify_fouling()`
+  functions. All inputs validated at system boundaries (oxide sum
+  bounds 70–105 wt-%, any oxide in [0, 100], sulfur in [0, 15],
+  non-empty source_id, blend fractions sum to 1.0 ±0.001, no duplicates,
+  every referenced source must be registered).
+- **`tests/test_slagging_fouling_index.py`** — 65 pytest tests covering
+  B/A / S/A / Fe-Ca / R_s / R_f property correctness, bituminous vs
+  lignitic fouling variants, mass-weighted blend arithmetic (SiO2,
+  sulfur, B/A consistency), single-source == 100-% blend equivalence,
+  dilution monotonicity, determinism, frozen-dataclass immutability on
+  `AshComposition` and `SlaggingFoulingReport`, `as_oxide_map()`
+  defensive-copy behaviour, `compare_sources` fan-out,
+  `registered_sources` tuple type, parametrized classification bands
+  (16 parametrized cases), NaN / negative rejection in classifiers,
+  and full boundary validation (negative / >100 oxide, oxide sum too
+  low / too high, negative / oversized sulfur, blank source_id, empty
+  profiles, duplicate profiles, empty blend, fractions not summing to
+  1, unregistered blend source, duplicate blend entries, out-of-range
+  blend fraction, blank blend source_id).
+- **`sample_data/slagging_fouling_samples.csv`** — 16-row realistic
+  Indonesian / Australian ash-chemistry catalogue (Kaltim Prima,
+  Adaro, Arutmin, Berau, Banko Lahat, Mt Arthur, Peak Downs, Curragh,
+  Blair Athol, Goonyella, Liddell, Sangatta, Tabang, Samarangau,
+  Jembayan, Golden Gunung) with oxide wt-%, dry sulfur, rank, and all
+  oxide sums in the valid [90, 101] wt-% range.
+- **README section "New: Slagging & Fouling Index Calculator"** —
+  runnable example that loads the sample catalogue, screens every
+  source with `compare_sources()`, and evaluates a 60/40 blend of a
+  low-risk Australian bituminous with a high-Fe Indonesian lignitic
+  to demonstrate slagging mitigation via dilution. Includes the Bryers
+  1996 Table 2.5 classification bands and the validated input
+  boundaries.
+
 ## [Unreleased] - 2026-04-20
 
 ### Added
